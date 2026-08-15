@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tham gia PHOENIX Hub</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="join-page">
+  <main class="join-wrap">
+    <section class="join-card">
+      <span class="logo large">PHX</span>
+      <span class="eyebrow">PHOENIX HUB</span>
+      <h1>Chào mừng anh em.</h1>
+      <p id="inviteState">Đang kiểm tra link mời...</p>
+
+      <form id="joinForm" class="join-form hidden">
+        <label>
+          Tên ingame
+          <input id="displayName" maxlength="32" required placeholder="VD: PHX.Louis">
+        </label>
+        <label>
+          UID Free Fire <span>(không bắt buộc)</span>
+          <input id="freefireUid" maxlength="32" placeholder="UID">
+        </label>
+        <button id="joinBtn" class="primary" type="submit">Tham gia PHOENIX</button>
+      </form>
+
+      <div id="joinError" class="error hidden"></div>
+    </section>
+  </main>
+
+  <script type="module" src="js/join.js"></script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PHOENIX Hub</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./">
+      <span class="logo">PHX</span>
+      <span><b>PHOENIX HUB</b><small>Community</small></span>
+    </a>
+    <div id="me" class="me hidden">
+      <span class="online-dot"></span>
+      <div><b id="meName">...</b><small id="meBranch">...</small></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="authGate" class="gate hidden">
+      <div>
+        <span class="eyebrow">PHOENIX VN</span>
+        <h1>Thiết bị này chưa được xác nhận.</h1>
+        <p>Hãy mở link mời cá nhân BQT đã gửi cho bạn trên Messenger.</p>
+      </div>
+    </section>
+
+    <div id="hub" class="hidden">
+      <section class="hero">
+        <div>
+          <span class="eyebrow">PHOENIX VN</span>
+          <h1>Chill cùng anh em.</h1>
+          <p>Phòng xem phim, phòng voice và tình trạng 3 nhánh — chỉ những thứ cần thiết.</p>
+        </div>
+        <div class="hero-stats">
+          <span>🟢 <b id="onlineTotal">0</b> online</span>
+          <span>🎧 Voice</span>
+          <span>🎬 Watch Party</span>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div><span class="eyebrow">WATCH PARTY</span><h2>Phòng xem phim</h2></div>
+          <button class="primary" disabled title="Sẽ bật ở bước tiếp theo">+ Tạo phòng</button>
+        </div>
+        <div class="empty-card">
+          <div class="big-icon">🎬</div>
+          <b>Chưa có phòng đang hoạt động</b>
+          <p>Phần tạo phòng + mật khẩu + tự ẩn/xóa sẽ nối sau khi hệ thống thành viên chạy ổn.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div><span class="eyebrow">VOICE</span><h2>Phòng voice</h2></div>
+          <button class="primary" disabled title="Sẽ nối LiveKit ở bước tiếp theo">+ Tạo voice</button>
+        </div>
+        <div class="empty-card">
+          <div class="big-icon">🎧</div>
+          <b>Chưa có phòng voice</b>
+          <p>LiveKit sẽ dùng đúng danh tính thành viên hiện tại để chống giả tên.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div><span class="eyebrow">QUÂN ĐOÀN</span><h2>Tình trạng 3 nhánh</h2></div>
+        </div>
+        <div id="branches" class="branch-grid">
+          <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

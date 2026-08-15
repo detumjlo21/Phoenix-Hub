@@ -12,19 +12,42 @@
       <span class="logo">PHX</span>
       <span><b>PHOENIX HUB</b><small>Community</small></span>
     </a>
-    <div id="me" class="me hidden">
-      <span class="online-dot"></span>
-      <div><b id="meName">...</b><small id="meBranch">...</small></div>
-    </div>
+
+    <nav class="header-actions">
+      <a id="adminLink" class="text-link hidden" href="admin.html">BQT</a>
+      <div id="me" class="me hidden">
+        <span class="online-dot"></span>
+        <div><b id="meName">...</b><small id="meBranch">...</small></div>
+      </div>
+    </nav>
   </header>
 
   <main class="wrap">
-    <section id="authGate" class="gate hidden">
+    <section id="guestGate" class="gate hidden">
       <div>
         <span class="eyebrow">PHOENIX VN</span>
-        <h1>Thiết bị này chưa được xác nhận.</h1>
-        <p>Hãy mở link mời cá nhân BQT đã gửi cho bạn trên Messenger.</p>
+        <h1>Chào mừng đến PHOENIX Hub.</h1>
+        <p>Bạn chưa là thành viên được duyệt trên thiết bị này.</p>
       </div>
+      <a class="primary button-link" href="join.html">Gửi yêu cầu tham gia</a>
+    </section>
+
+    <section id="pendingGate" class="gate hidden">
+      <div>
+        <span class="eyebrow">ĐANG CHỜ DUYỆT</span>
+        <h1>Yêu cầu của bạn đã được gửi.</h1>
+        <p id="pendingText">BQT sẽ duyệt khi kiểm tra thông tin thành viên.</p>
+      </div>
+      <a class="secondary button-link" href="join.html">Xem trạng thái</a>
+    </section>
+
+    <section id="rejectedGate" class="gate hidden">
+      <div>
+        <span class="eyebrow">CHƯA ĐƯỢC DUYỆT</span>
+        <h1>Yêu cầu hiện chưa được chấp nhận.</h1>
+        <p>Bạn có thể sửa thông tin và gửi lại yêu cầu mới.</p>
+      </div>
+      <a class="primary button-link" href="join.html">Gửi lại</a>
     </section>
 
     <div id="hub" class="hidden">
@@ -44,24 +67,24 @@
       <section class="section">
         <div class="section-head">
           <div><span class="eyebrow">WATCH PARTY</span><h2>Phòng xem phim</h2></div>
-          <button class="primary" disabled title="Sẽ bật ở bước tiếp theo">+ Tạo phòng</button>
+          <button class="primary" disabled>+ Tạo phòng</button>
         </div>
         <div class="empty-card">
           <div class="big-icon">🎬</div>
-          <b>Chưa có phòng đang hoạt động</b>
-          <p>Phần tạo phòng + mật khẩu + tự ẩn/xóa sẽ nối sau khi hệ thống thành viên chạy ổn.</p>
+          <b>Chưa nối hệ thống phòng</b>
+          <p>Sau khi duyệt thành viên chạy ổn, bước tiếp theo sẽ bật phòng riêng + mật khẩu + tự ẩn/xóa.</p>
         </div>
       </section>
 
       <section class="section">
         <div class="section-head">
           <div><span class="eyebrow">VOICE</span><h2>Phòng voice</h2></div>
-          <button class="primary" disabled title="Sẽ nối LiveKit ở bước tiếp theo">+ Tạo voice</button>
+          <button class="primary" disabled>+ Tạo voice</button>
         </div>
         <div class="empty-card">
           <div class="big-icon">🎧</div>
-          <b>Chưa có phòng voice</b>
-          <p>LiveKit sẽ dùng đúng danh tính thành viên hiện tại để chống giả tên.</p>
+          <b>LiveKit sẽ nối ở bước tiếp theo</b>
+          <p>Mỗi người vào voice bằng chính danh tính đã được BQT duyệt.</p>
         </div>
       </section>
 

@@ -9,24 +9,39 @@
 <body class="join-page">
   <main class="join-wrap">
     <section class="join-card">
-      <span class="logo large">PHX</span>
-      <span class="eyebrow">PHOENIX HUB</span>
-      <h1>Chào mừng anh em.</h1>
-      <p id="inviteState">Đang kiểm tra link mời...</p>
+      <a class="brand mini-brand" href="./">
+        <span class="logo large">PHX</span>
+      </a>
 
-      <form id="joinForm" class="join-form hidden">
+      <span class="eyebrow">PHOENIX HUB</span>
+      <h1>Gửi yêu cầu tham gia.</h1>
+      <p>Mỗi thành viên chỉ cần làm bước này một lần trên thiết bị đang dùng.</p>
+
+      <div id="statusBox" class="status-box hidden"></div>
+
+      <form id="joinForm" class="join-form">
         <label>
           Tên ingame
           <input id="displayName" maxlength="32" required placeholder="VD: PHX.Louis">
         </label>
+
         <label>
-          UID Free Fire <span>(không bắt buộc)</span>
-          <input id="freefireUid" maxlength="32" placeholder="UID">
+          UID Free Fire
+          <input id="freefireUid" maxlength="32" required placeholder="UID của bạn">
         </label>
-        <button id="joinBtn" class="primary" type="submit">Tham gia PHOENIX</button>
+
+        <label>
+          Nhánh đang tham gia
+          <select id="branchId" required>
+            <option value="">Đang tải 3 nhánh...</option>
+          </select>
+        </label>
+
+        <button id="submitBtn" class="primary" type="submit">Gửi yêu cầu cho BQT</button>
       </form>
 
       <div id="joinError" class="error hidden"></div>
+      <a class="back-link" href="./">← Về PHOENIX Hub</a>
     </section>
   </main>
 

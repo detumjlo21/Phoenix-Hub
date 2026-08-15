@@ -1,69 +1,113 @@
-import { supabase } from "./supabaseClient.js";
+import { supabase, ensureAnonymousSession } from "./supabaseClient.js";
 
-const state = document.getElementById("inviteState");
 const form = document.getElementById("joinForm");
+const branchSelect = document.getElementById("branchId");
+const statusBox = document.getElementById("statusBox");
 const errorBox = document.getElementById("joinError");
-const btn = document.getElementById("joinBtn");
+const submitBtn = document.getElementById("submitBtn");
 
-const token = new URLSearchParams(location.search).get("token");
+let currentRequest = null;
+let currentMember = null;
 
-function fail(msg){
-  state.textContent = "Link mời không sử dụng được.";
+function showError(msg){
   errorBox.textContent = msg;
   errorBox.classList.remove("hidden");
-  form.classList.add("hidden");
 }
 
-async function ensureAnonymousSession(){
-  const { data: existing } = await supabase.auth.getSession();
-  if (existing.session) return existing.session;
+function setStatus(req){
+  currentRequest = req;
+  statusBox.className = "status-box";
+  statusBox.classList.remove("hidden");
 
-  const { data, error } = await supabase.auth.signInAnonymously();
-  if (error) throw error;
-  return data.session;
+  if(req.status === "pending"){
+    statusBox.textContent = `🟡 Yêu cầu đang chờ BQT duyệt. Gửi lúc ${new Date(req.created_at).toLocaleString("vi-VN")}.`;
+    submitBtn.textContent = "Cập nhật yêu cầu";
+  }else if(req.status === "approved"){
+    statusBox.classList.add("approved");
+    statusBox.innerHTML = `✅ Bạn đã được duyệt. <a href="./" style="color:inherit">Vào PHOENIX Hub</a>`;
+    form.classList.add("hidden");
+  }else if(req.status === "rejected"){
+    statusBox.classList.add("rejected");
+    statusBox.textContent = "❌ Yêu cầu trước chưa được duyệt. Bạn có thể sửa thông tin và gửi lại.";
+    submitBtn.textContent = "Gửi lại yêu cầu";
+  }
 }
 
-async function init(){
-  if(!token) return fail("Thiếu token trong link mời.");
+async function loadBranches(){
+  const { data, error } = await supabase.from("branches").select("id,name").order("id");
+  if(error) throw error;
 
-  try{
-    await ensureAnonymousSession();
+  branchSelect.innerHTML = `<option value="">Chọn nhánh</option>` +
+    data.map(b=>`<option value="${b.id}">${b.name}</option>`).join("");
+}
 
-    const { data, error } = await supabase.rpc("preview_invite", { invite_token: token });
-    if(error) throw error;
-    if(!data?.ok) return fail(data?.message || "Link mời không hợp lệ.");
+async function loadIdentity(){
+  const { data: auth } = await supabase.auth.getUser();
+  if(!auth.user) return;
 
-    state.textContent = `Bạn được mời vào ${data.branch_name}. Nhập tên ingame để hoàn tất.`;
-    form.classList.remove("hidden");
-  }catch(err){
-    fail(err.message || "Không thể kiểm tra link mời.");
+  const [{ data: member }, { data: req }] = await Promise.all([
+    supabase.from("members")
+      .select("id,display_name,freefire_uid,branch_id")
+      .eq("auth_user_id", auth.user.id)
+      .maybeSingle(),
+    supabase.from("membership_requests")
+      .select("*")
+      .eq("auth_user_id", auth.user.id)
+      .order("created_at",{ascending:false})
+      .limit(1)
+      .maybeSingle()
+  ]);
+
+  currentMember = member;
+  if(member){
+    statusBox.className = "status-box approved";
+    statusBox.innerHTML = `✅ Thiết bị này đã được duyệt cho <b>${member.display_name}</b>. <a href="./" style="color:inherit">Vào PHOENIX Hub</a>`;
+    statusBox.classList.remove("hidden");
+    form.classList.add("hidden");
+    return;
+  }
+
+  if(req){
+    setStatus(req);
+    document.getElementById("displayName").value = req.display_name || "";
+    document.getElementById("freefireUid").value = req.freefire_uid || "";
+    branchSelect.value = String(req.branch_id || "");
   }
 }
 
 form.addEventListener("submit", async (e)=>{
   e.preventDefault();
-  btn.disabled = true;
-  btn.textContent = "Đang tham gia...";
+  errorBox.classList.add("hidden");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Đang gửi...";
 
   try{
-    const displayName = document.getElementById("displayName").value.trim();
-    const uid = document.getElementById("freefireUid").value.trim();
+    const payload = {
+      member_display_name: document.getElementById("displayName").value.trim(),
+      member_freefire_uid: document.getElementById("freefireUid").value.trim(),
+      desired_branch_id: Number(branchSelect.value)
+    };
 
-    const { data, error } = await supabase.rpc("claim_invite", {
-      invite_token: token,
-      member_display_name: displayName,
-      member_freefire_uid: uid || null
-    });
+    const { data, error } = await supabase.rpc("submit_membership_request", payload);
     if(error) throw error;
-    if(!data?.ok) throw new Error(data?.message || "Không thể nhận link mời.");
+    if(!data?.ok) throw new Error(data?.message || "Không thể gửi yêu cầu.");
 
-    location.href = "./";
+    location.reload();
   }catch(err){
-    errorBox.textContent = err.message;
-    errorBox.classList.remove("hidden");
-    btn.disabled = false;
-    btn.textContent = "Tham gia PHOENIX";
+    showError(err.message || "Có lỗi xảy ra.");
+    submitBtn.disabled = false;
+    submitBtn.textContent = currentRequest ? "Cập nhật yêu cầu" : "Gửi yêu cầu cho BQT";
   }
 });
+
+async function init(){
+  try{
+    await ensureAnonymousSession();
+    await loadBranches();
+    await loadIdentity();
+  }catch(err){
+    showError(err.message || "Không thể kết nối Supabase.");
+  }
+}
 
 init();

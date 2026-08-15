@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BQT • PHOENIX Hub</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./">
+      <span class="logo">PHX</span>
+      <span><b>PHOENIX HUB</b><small>BQT</small></span>
+    </a>
+    <a class="text-link" href="./">← Về Hub</a>
+  </header>
+
+  <main class="wrap">
+    <section id="noAccess" class="gate hidden">
+      <div>
+        <span class="eyebrow">BQT</span>
+        <h1>Bạn không có quyền truy cập.</h1>
+        <p>Trang này dành cho Chủ QĐ, Quyền chủ và Tổng quản.</p>
+      </div>
+    </section>
+
+    <div id="adminPanel" class="hidden">
+      <section class="hero compact-hero">
+        <div>
+          <span class="eyebrow">BQT PHOENIX</span>
+          <h1>Duyệt thành viên.</h1>
+          <p>Kiểm tra tên, UID và nhánh trước khi duyệt.</p>
+        </div>
+        <div class="hero-stats">
+          <span>🟡 <b id="pendingCount">0</b> chờ duyệt</span>
+        </div>
+      </section>
+
+      <section id="bootstrapBox" class="bootstrap-box hidden">
+        <div>
+          <b>Thiết lập Tổng quản</b>
+          <p>Nếu bạn là Chủ Nhánh 1 đầu tiên, bấm để nhận quyền quản lý cả 3 nhánh.</p>
+        </div>
+        <button id="bootstrapBtn" class="primary">Nhận quyền Tổng quản</button>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div><span class="eyebrow">YÊU CẦU</span><h2>Đang chờ duyệt</h2></div>
+          <button id="refreshBtn" class="secondary">Làm mới</button>
+        </div>
+
+        <div id="requests" class="request-list">
+          <div class="skeleton request-skeleton"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

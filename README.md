@@ -1,71 +1,47 @@
-# PHOENIX Hub
+# PHOENIX Hub — Approval Version
 
-Static HTML/CSS/JS for GitHub Pages + Supabase.
+Frontend: HTML/CSS/JS + GitHub Pages  
+Backend/Data: Supabase  
+Voice later: LiveKit
 
-## 1. Supabase project already configured in frontend
+## Chức năng ở bản này
 
-Project URL:
-`https://uwtnvfwjjofvshlzfzt0.supabase.co`
+- 1 link đăng ký chung: `join.html`
+- Thành viên nhập Tên ingame + UID + Nhánh
+- Yêu cầu chuyển sang `pending`
+- Chủ / Quyền chủ duyệt nhánh của mình
+- Tổng quản duyệt cả 3 nhánh
+- Sau khi duyệt, thiết bị tự nhận diện và vào Hub
+- UID trùng sẽ bị chặn
+- Nhánh đủ 55 người sẽ không duyệt thêm
+- Heartbeat online mỗi 45 giây
 
-Publishable key is stored in:
-`js/config.js`
+## Cài đặt
 
-A Supabase publishable key is intended for frontend use. Never put service_role, DB password, or LiveKit secret in this repository.
+1. Supabase Anonymous Sign-ins phải bật.
+2. Chạy:
+   `supabase/approval-system.sql`
+3. Upload toàn bộ file mới lên GitHub repo, ghi đè bản cũ.
+4. GitHub Pages sẽ tự deploy lại.
 
-## 2. Enable Anonymous Sign-ins
+## Quan trọng: tạo tài khoản Founder / Tổng quản đầu tiên
 
-In Supabase Dashboard:
+Bản cũ dùng invite token. Bạn vẫn cần dùng link invite cũ MỘT LẦN cho chính bạn để tạo member Chủ Nhánh 1.
 
-Authentication → Providers / Sign In Methods → Anonymous → Enable
+Sau khi bạn đã vào được Hub với role `owner` Nhánh 1:
 
-This does NOT ask members to create a username/password. It gives each browser/device a secure Supabase Auth identity behind the scenes.
+- mở `admin.html`
+- bấm `Nhận quyền Tổng quản`
 
-## 3. Run the SQL
+Từ đó bạn có quyền duyệt cả 3 nhánh.
 
-Open Supabase SQL Editor and run:
+Các Chủ Nhánh 2/3 về sau có thể được đổi role trong Supabase từ `member` → `owner`.
+Quyền chủ dùng `co_owner`.
 
-`supabase/setup.sql`
+## Link chung để ghim Messenger
 
-This adds:
-- preview_invite()
-- claim_invite()
-- RLS policies for member identity / heartbeat
+Sau khi GitHub Pages deploy:
 
-## 4. Upload repository to GitHub
+`https://detumjlo21.github.io/Phoenix-Hub/join.html`
 
-Upload all files/folders in this ZIP to the root of `Phoenix-Hub`.
-
-Then:
-
-Settings → Pages → Deploy from a branch → `main` / `(root)` → Save
-
-Your site will normally be:
-`https://detumjlo21.github.io/Phoenix-Hub/`
-
-## 5. Test your invite
-
-Create a NEW invite token because the first one was shown publicly in a screenshot.
-
-Then open:
-
-`https://detumjlo21.github.io/Phoenix-Hub/join.html?token=YOUR_NEW_TOKEN`
-
-Enter your ingame name → Join.
-
-After that, opening the home page on the same browser should remember you automatically.
-
-## Current scope
-
-Working in this version:
-- one-time invite claim
-- no password/account form
-- browser remembers member
-- online heartbeat every 45 sec
-- 3 branch member/online counts
-
-Next:
-- room creation
-- room password
-- auto hide/delete
-- LiveKit voice
-- watch party
+Bạn chỉ cần ghim một link này cho toàn bộ cộng đồng.

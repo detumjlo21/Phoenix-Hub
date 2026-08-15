@@ -12,16 +12,44 @@
       <span class="logo">PHX</span>
       <span><b>PHOENIX HUB</b><small>BQT</small></span>
     </a>
-    <a class="text-link" href="./">← Về Hub</a>
+    <div class="header-actions">
+      <span id="adminIdentity" class="admin-identity hidden"></span>
+      <button id="logoutBtn" class="text-button hidden">Đăng xuất</button>
+      <a class="text-link" href="./">← Về Hub</a>
+    </div>
   </header>
 
   <main class="wrap">
+    <section id="loginPanel" class="admin-login-wrap hidden">
+      <div class="admin-login-card">
+        <span class="logo large">PHX</span>
+        <span class="eyebrow">PHOENIX BQT</span>
+        <h1>Đăng nhập Admin.</h1>
+        <p>Dùng tài khoản BQT riêng. Thành viên thường không cần đăng nhập ở đây.</p>
+
+        <form id="adminLoginForm" class="join-form admin-login-form">
+          <label>
+            Tài khoản Admin (email)
+            <input id="adminEmail" type="email" autocomplete="username" required placeholder="admin@phoenixhub.vn">
+          </label>
+          <label>
+            Mật khẩu
+            <input id="adminPassword" type="password" autocomplete="current-password" required placeholder="••••••••">
+          </label>
+          <button id="loginBtn" class="primary" type="submit">Đăng nhập BQT</button>
+        </form>
+
+        <div id="loginError" class="error hidden"></div>
+      </div>
+    </section>
+
     <section id="noAccess" class="gate hidden">
       <div>
         <span class="eyebrow">BQT</span>
-        <h1>Bạn không có quyền truy cập.</h1>
-        <p>Trang này dành cho Chủ QĐ, Quyền chủ và Tổng quản.</p>
+        <h1>Tài khoản không có quyền truy cập.</h1>
+        <p>Tài khoản đã đăng nhập nhưng chưa được gắn quyền Chủ QĐ, Quyền chủ hoặc Tổng quản.</p>
       </div>
+      <button id="switchAccountBtn" class="secondary">Đổi tài khoản</button>
     </section>
 
     <div id="adminPanel" class="hidden">
@@ -34,14 +62,6 @@
         <div class="hero-stats">
           <span>🟡 <b id="pendingCount">0</b> chờ duyệt</span>
         </div>
-      </section>
-
-      <section id="bootstrapBox" class="bootstrap-box hidden">
-        <div>
-          <b>Thiết lập Tổng quản</b>
-          <p>Nếu bạn là Chủ Nhánh 1 đầu tiên, bấm để nhận quyền quản lý cả 3 nhánh.</p>
-        </div>
-        <button id="bootstrapBtn" class="primary">Nhận quyền Tổng quản</button>
       </section>
 
       <section class="section">

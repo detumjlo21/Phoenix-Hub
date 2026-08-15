@@ -7,6 +7,7 @@ const errorBox = document.getElementById("joinError");
 const submitBtn = document.getElementById("submitBtn");
 
 let currentRequest = null;
+let currentMember = null;
 
 function showError(msg){
   errorBox.textContent = msg;
@@ -19,49 +20,37 @@ function setStatus(req){
   statusBox.classList.remove("hidden");
 
   if(req.status === "pending"){
-    statusBox.textContent =
-      `🟡 Yêu cầu đang chờ BQT duyệt. Gửi lúc ${new Date(req.created_at).toLocaleString("vi-VN")}.`;
+    statusBox.textContent = `🟡 Yêu cầu đang chờ BQT duyệt. Gửi lúc ${new Date(req.created_at).toLocaleString("vi-VN")}.`;
     submitBtn.textContent = "Cập nhật yêu cầu";
   }else if(req.status === "approved"){
     statusBox.classList.add("approved");
-    statusBox.innerHTML =
-      `✅ Bạn đã được duyệt. <a href="./" style="color:inherit">Vào PHOENIX Hub</a>`;
+    statusBox.innerHTML = `✅ Bạn đã được duyệt. <a href="./" style="color:inherit">Vào PHOENIX Hub</a>`;
     form.classList.add("hidden");
   }else if(req.status === "rejected"){
     statusBox.classList.add("rejected");
-    statusBox.textContent =
-      "❌ Yêu cầu trước chưa được duyệt. Bạn có thể sửa thông tin và gửi lại.";
+    statusBox.textContent = "❌ Yêu cầu trước chưa được duyệt. Bạn có thể sửa thông tin và gửi lại.";
     submitBtn.textContent = "Gửi lại yêu cầu";
   }
 }
 
 async function loadBranches(){
-  const { data, error } = await supabase
-    .from("branches")
-    .select("id,name")
-    .order("id");
-
+  const { data, error } = await supabase.from("branches").select("id,name").order("id");
   if(error) throw error;
 
-  branchSelect.innerHTML =
-    `<option value="">Chọn nhánh</option>` +
+  branchSelect.innerHTML = `<option value="">Chọn nhánh</option>` +
     data.map(b=>`<option value="${b.id}">${b.name}</option>`).join("");
 }
 
 async function loadIdentity(){
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if(authError) throw authError;
+  const { data: auth } = await supabase.auth.getUser();
   if(!auth.user) return;
 
-  const [memberResult, requestResult] = await Promise.all([
-    supabase
-      .from("members")
+  const [{ data: member }, { data: req }] = await Promise.all([
+    supabase.from("members")
       .select("id,display_name,freefire_uid,branch_id")
       .eq("auth_user_id", auth.user.id)
       .maybeSingle(),
-
-    supabase
-      .from("membership_requests")
+    supabase.from("membership_requests")
       .select("*")
       .eq("auth_user_id", auth.user.id)
       .order("created_at",{ascending:false})
@@ -69,17 +58,10 @@ async function loadIdentity(){
       .maybeSingle()
   ]);
 
-  if(memberResult.error) throw memberResult.error;
-  if(requestResult.error) throw requestResult.error;
-
-  const member = memberResult.data;
-  const req = requestResult.data;
-
+  currentMember = member;
   if(member){
     statusBox.className = "status-box approved";
-    statusBox.innerHTML =
-      `✅ Thiết bị này đã được duyệt cho <b>${member.display_name}</b>. ` +
-      `<a href="./" style="color:inherit">Vào PHOENIX Hub</a>`;
+    statusBox.innerHTML = `✅ Thiết bị này đã được duyệt cho <b>${member.display_name}</b>. <a href="./" style="color:inherit">Vào PHOENIX Hub</a>`;
     statusBox.classList.remove("hidden");
     form.classList.add("hidden");
     return;
@@ -95,7 +77,6 @@ async function loadIdentity(){
 
 form.addEventListener("submit", async (e)=>{
   e.preventDefault();
-
   errorBox.classList.add("hidden");
   submitBtn.disabled = true;
   submitBtn.textContent = "Đang gửi...";
@@ -107,21 +88,15 @@ form.addEventListener("submit", async (e)=>{
       desired_branch_id: Number(branchSelect.value)
     };
 
-    const { data, error } = await supabase.rpc(
-      "submit_membership_request",
-      payload
-    );
-
+    const { data, error } = await supabase.rpc("submit_membership_request", payload);
     if(error) throw error;
     if(!data?.ok) throw new Error(data?.message || "Không thể gửi yêu cầu.");
 
     location.reload();
-
   }catch(err){
     showError(err.message || "Có lỗi xảy ra.");
     submitBtn.disabled = false;
-    submitBtn.textContent =
-      currentRequest ? "Cập nhật yêu cầu" : "Gửi yêu cầu cho BQT";
+    submitBtn.textContent = currentRequest ? "Cập nhật yêu cầu" : "Gửi yêu cầu cho BQT";
   }
 });
 
@@ -131,7 +106,6 @@ async function init(){
     await loadBranches();
     await loadIdentity();
   }catch(err){
-    console.error("Join init error:", err);
     showError(err.message || "Không thể kết nối Supabase.");
   }
 }

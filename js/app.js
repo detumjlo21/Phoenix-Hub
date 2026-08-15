@@ -21,7 +21,7 @@ async function getCurrentMember(){
   const { data, error } = await supabase
     .from("members")
     .select("id,display_name,branch_id,role,is_global_admin,branches(name)")
-    .eq("auth_user_id", auth.user.id)
+    .eq("auth_user_id",auth.user.id)
     .maybeSingle();
 
   if(error) throw error;
@@ -29,8 +29,7 @@ async function getCurrentMember(){
 }
 
 async function getLatestRequest(){
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if(authError) throw authError;
+  const { data: auth } = await supabase.auth.getUser();
   if(!auth.user) return null;
 
   const { data, error } = await supabase
@@ -47,43 +46,34 @@ async function getLatestRequest(){
 
 async function heartbeat(){
   if(!member) return;
-
   const { error } = await supabase
     .from("members")
-    .update({
-      is_online:true,
-      last_seen:new Date().toISOString()
-    })
+    .update({is_online:true,last_seen:new Date().toISOString()})
     .eq("id",member.id);
-
-  if(error) console.warn("Heartbeat error:", error.message);
+  if(error) console.warn("Heartbeat:", error.message);
 }
 
 async function loadBranches(){
   const { data, error } = await supabase.rpc("get_branch_stats");
   if(error) throw error;
 
-  let totalOnline = 0;
-  const box = document.getElementById("branches");
-  box.innerHTML = "";
+  let totalOnline=0;
+  const box=document.getElementById("branches");
+  box.innerHTML="";
 
   for(const b of (data || [])){
-    const count = Number(b.member_count || 0);
-    const online = Number(b.online_count || 0);
-    const maxMembers = Number(b.max_members || 55);
-    totalOnline += online;
-
-    const remaining = Math.max(0, maxMembers - count);
-    const pct = Math.min(100, (count / maxMembers) * 100);
+    const count=Number(b.member_count || 0);
+    const online=Number(b.online_count || 0);
+    const maxMembers=Number(b.max_members || 55);
+    totalOnline+=online;
+    const remaining=Math.max(0,maxMembers-count);
+    const pct=Math.min(100,(count/maxMembers)*100);
 
     box.insertAdjacentHTML("beforeend",`
       <article class="branch-card">
         <div class="branch-head">
-          <div>
-            <small>${String(b.name).toUpperCase()}</small>
-            <b>${count} / ${maxMembers}</b>
-          </div>
-          <span class="pill">${remaining===0 ? "Đầy" : `Còn ${remaining} slot`}</span>
+          <div><small>${String(b.name).toUpperCase()}</small><b>${count} / ${maxMembers}</b></div>
+          <span class="pill">${remaining===0?"Đầy":`Còn ${remaining} slot`}</span>
         </div>
         <div class="progress"><i style="width:${pct}%"></i></div>
         <div class="branch-foot">
@@ -93,24 +83,22 @@ async function loadBranches(){
       </article>
     `);
   }
-
-  document.getElementById("onlineTotal").textContent = totalOnline;
+  document.getElementById("onlineTotal").textContent=totalOnline;
 }
 
 async function init(){
   try{
-    await ensureAnonymousSession();
-    hideAll();
+    const { data: existing } = await supabase.auth.getSession();
+    if(!existing.session) await ensureAnonymousSession();
 
-    member = await getCurrentMember();
+    hideAll();
+    member=await getCurrentMember();
 
     if(member){
       hub.classList.remove("hidden");
       me.classList.remove("hidden");
-
-      document.getElementById("meName").textContent = member.display_name;
-      document.getElementById("meBranch").textContent =
-        member.branches?.name || "PHOENIX";
+      document.getElementById("meName").textContent=member.display_name;
+      document.getElementById("meBranch").textContent=member.branches?.name || "PHOENIX";
 
       if(member.is_global_admin || ["owner","co_owner"].includes(member.role)){
         adminLink.classList.remove("hidden");
@@ -118,35 +106,17 @@ async function init(){
 
       await heartbeat();
       await loadBranches();
-
-      setInterval(async()=>{
-        await heartbeat();
-        await loadBranches();
-      },45000);
-
+      setInterval(async()=>{await heartbeat();await loadBranches();},45000);
       return;
     }
 
-    const req = await getLatestRequest();
-
-    if(!req){
-      guestGate.classList.remove("hidden");
-    }else if(req.status==="pending"){
-      pendingGate.classList.remove("hidden");
-    }else if(req.status==="rejected"){
-      rejectedGate.classList.remove("hidden");
-    }else if(req.status==="approved"){
-      // Approved request but no member row should be rare.
-      // Show pending-like screen instead of pretending device is unregistered.
-      pendingGate.classList.remove("hidden");
-      document.getElementById("pendingText").textContent =
-        "Yêu cầu đã được duyệt nhưng hồ sơ thành viên chưa đồng bộ. Hãy tải lại trang sau vài giây.";
-    }else{
-      guestGate.classList.remove("hidden");
-    }
-
+    const req=await getLatestRequest();
+    if(!req) guestGate.classList.remove("hidden");
+    else if(req.status==="pending") pendingGate.classList.remove("hidden");
+    else if(req.status==="rejected") rejectedGate.classList.remove("hidden");
+    else guestGate.classList.remove("hidden");
   }catch(err){
-    console.error("PHX Hub init error:", err);
+    console.error("PHX Hub init:",err);
     hideAll();
     guestGate.classList.remove("hidden");
   }

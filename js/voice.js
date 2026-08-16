@@ -7,6 +7,7 @@ let activeRoomMeta = null;
 let selectedRoom = null;
 let roomAdminWatchTimer = null;
 let roomRemovedByAdmin = false;
+let adminRoomNoticeChannel = null;
 
 const roomsBox = document.getElementById("voiceRooms");
 const modal = document.getElementById("voiceModal");
@@ -201,6 +202,7 @@ async function connectToRoom(roomId, password=""){
     updateMicButton();
     openModal();
     renderParticipants();
+    startAdminRoomNotice();
     startAdminRoomWatch();
   }catch(err){
     showError(err.message || "Không thể vào voice.");
@@ -258,6 +260,59 @@ async function toggleMic(){
 }
 
 
+
+async function startAdminRoomNotice(){
+  if(adminRoomNoticeChannel){
+    try{ await supabase.removeChannel(adminRoomNoticeChannel); }catch{}
+    adminRoomNoticeChannel = null;
+  }
+
+  if(!activeRoomMeta?.id) return;
+
+  adminRoomNoticeChannel = supabase
+    .channel(`admin-room:voice:${activeRoomMeta.id}`)
+    .on("broadcast", { event: "closed" }, async ({payload}) => {
+      if(payload?.reason !== "admin") return;
+      await handleVoiceAdminClosed();
+    });
+
+  adminRoomNoticeChannel.subscribe();
+}
+
+async function handleVoiceAdminClosed(){
+  if(roomRemovedByAdmin) return;
+  roomRemovedByAdmin = true;
+
+  clearInterval(roomAdminWatchTimer);
+  roomAdminWatchTimer = null;
+
+  showError("🛡️ BQT đã đóng phòng Voice này.");
+  const stateEl = document.getElementById("activeVoiceState");
+  if(stateEl) stateEl.textContent = "BQT đã đóng phòng";
+
+  setTimeout(async () => {
+    try{
+      if(room) await room.disconnect();
+    }catch{}
+
+    if(adminRoomNoticeChannel){
+      try{ await supabase.removeChannel(adminRoomNoticeChannel); }catch{}
+      adminRoomNoticeChannel = null;
+    }
+
+    room = null;
+    activeRoomMeta = null;
+
+    alert("BQT đã đóng phòng Voice.");
+
+    document.body.classList.remove("modal-open");
+    modal.classList.add("hidden");
+    roomRemovedByAdmin = false;
+
+    await loadVoiceRooms();
+  }, 700);
+}
+
 function startAdminRoomWatch(){
   clearInterval(roomAdminWatchTimer);
   roomRemovedByAdmin = false;
@@ -274,33 +329,27 @@ function startAdminRoomWatch(){
       if(error) return;
 
       if(!data?.active){
+        if(data?.reason === "admin"){
+          await handleVoiceAdminClosed();
+          return;
+        }
+
         clearInterval(roomAdminWatchTimer);
         roomAdminWatchTimer = null;
-        roomRemovedByAdmin = true;
 
-        showError(
-          data?.reason === "admin"
-            ? "🛡️ BQT đã đóng phòng Voice này."
-            : "Phòng Voice đã kết thúc."
-        );
-
-        document.getElementById("activeVoiceState").textContent =
-          data?.reason === "admin" ? "BQT đã đóng phòng" : "Phòng đã kết thúc";
+        showError("Phòng Voice đã kết thúc.");
+        const stateEl = document.getElementById("activeVoiceState");
+        if(stateEl) stateEl.textContent = "Phòng đã kết thúc";
 
         setTimeout(async () => {
-          if(room){
-            try{ await room.disconnect(); }catch{}
-          }
+          try{ if(room) await room.disconnect(); }catch{}
           room = null;
           activeRoomMeta = null;
           document.body.classList.remove("modal-open");
           modal.classList.add("hidden");
-          roomRemovedByAdmin = false;
           await loadVoiceRooms();
-          alert(data?.reason === "admin"
-            ? "BQT đã đóng phòng Voice."
-            : "Phòng Voice đã kết thúc.");
-        }, 1200);
+          alert("Phòng Voice đã kết thúc.");
+        }, 900);
       }
     }catch(e){
       console.warn("Admin room watch:", e);
@@ -312,6 +361,12 @@ async function leaveVoice(){
   clearInterval(roomAdminWatchTimer);
   roomAdminWatchTimer = null;
   roomRemovedByAdmin = false;
+
+  if(adminRoomNoticeChannel){
+    try{ await supabase.removeChannel(adminRoomNoticeChannel); }catch{}
+    adminRoomNoticeChannel = null;
+  }
+
   if(!room) return closeModal();
   document.querySelectorAll("audio[data-phx-remote-audio='1']").forEach(el => el.remove());
   await room.disconnect();

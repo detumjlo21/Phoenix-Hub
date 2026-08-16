@@ -4,6 +4,8 @@ import { Room, RoomEvent, Track } from "https://cdn.jsdelivr.net/npm/livekit-cli
 let me, selectedRoom, activeRoom, channel, player, playerReady = false;
 let suppressUntil = 0, syncTimer = null, hostPublishTimer = null;
 let adminRoomWatchTimer = null;
+let adminWatchNoticeChannel = null;
+let watchAdminClosing = false;
 let watchVoice = null, currentPassword = "";
 
 const $ = id => document.getElementById(id);
@@ -172,6 +174,7 @@ async function enterRoom(r, password){
   });
 
   startSyncLoop();
+  startAdminWatchNotice();
   startAdminRoomWatch();
 }
 
@@ -527,6 +530,48 @@ async function disconnectWatchVoice(){
 }
 
 
+
+async function startAdminWatchNotice(){
+  if(adminWatchNoticeChannel){
+    try{ await supabase.removeChannel(adminWatchNoticeChannel); }catch{}
+    adminWatchNoticeChannel = null;
+  }
+
+  if(!activeRoom?.id) return;
+
+  adminWatchNoticeChannel = supabase
+    .channel(`admin-room:watch:${activeRoom.id}`)
+    .on("broadcast", { event: "closed" }, async ({payload}) => {
+      if(payload?.reason !== "admin") return;
+      await handleWatchAdminClosed();
+    });
+
+  adminWatchNoticeChannel.subscribe();
+}
+
+async function handleWatchAdminClosed(){
+  if(watchAdminClosing) return;
+  watchAdminClosing = true;
+
+  clearInterval(adminRoomWatchTimer);
+  adminRoomWatchTimer = null;
+
+  showError("🛡️ BQT đã đóng Watch Party này.");
+  $("watchSyncState").textContent = "BQT đã đóng phòng";
+
+  setTimeout(async () => {
+    alert("BQT đã đóng phòng xem phim.");
+
+    if(adminWatchNoticeChannel){
+      try{ await supabase.removeChannel(adminWatchNoticeChannel); }catch{}
+      adminWatchNoticeChannel = null;
+    }
+
+    await leaveRoom();
+    watchAdminClosing = false;
+  }, 700);
+}
+
 function startAdminRoomWatch(){
   clearInterval(adminRoomWatchTimer);
 
@@ -542,24 +587,20 @@ function startAdminRoomWatch(){
       if(error) return;
 
       if(!data?.active){
+        if(data?.reason === "admin"){
+          await handleWatchAdminClosed();
+          return;
+        }
+
         clearInterval(adminRoomWatchTimer);
         adminRoomWatchTimer = null;
-
-        showError(
-          data?.reason === "admin"
-            ? "🛡️ BQT đã đóng Watch Party này."
-            : "Watch Party đã kết thúc."
-        );
-
-        $("watchSyncState").textContent =
-          data?.reason === "admin" ? "BQT đã đóng phòng" : "Phòng đã kết thúc";
+        showError("Watch Party đã kết thúc.");
+        $("watchSyncState").textContent = "Phòng đã kết thúc";
 
         setTimeout(async () => {
+          alert("Phòng xem phim đã kết thúc.");
           await leaveRoom();
-          alert(data?.reason === "admin"
-            ? "BQT đã đóng phòng xem phim."
-            : "Phòng xem phim đã kết thúc.");
-        }, 1200);
+        }, 900);
       }
     }catch(e){
       console.warn("Admin watch room:", e);
@@ -593,6 +634,11 @@ async function leaveRoom(){
   syncTimer = null;
   hostPublishTimer = null;
   adminRoomWatchTimer = null;
+
+  if(adminWatchNoticeChannel){
+    try{ await supabase.removeChannel(adminWatchNoticeChannel); }catch{}
+    adminWatchNoticeChannel = null;
+  }
 
   await disconnectWatchVoice();
 

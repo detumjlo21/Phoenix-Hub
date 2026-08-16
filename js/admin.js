@@ -125,6 +125,40 @@ async function loadRooms(){
     </article>`).join("");
 }
 
+
+async function broadcastAdminRoomClosed(roomType, roomId){
+  const ch = supabase.channel(`admin-room:${roomType}:${roomId}`);
+
+  try{
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error("Realtime timeout")), 2500);
+
+      ch.subscribe(async status => {
+        if(status === "SUBSCRIBED"){
+          clearTimeout(timeout);
+          try{
+            await ch.send({
+              type: "broadcast",
+              event: "closed",
+              payload: {
+                reason: "admin",
+                roomType,
+                roomId,
+                at: Date.now()
+              }
+            });
+          }catch{}
+          resolve();
+        }
+      });
+    });
+  }catch(err){
+    console.warn("Broadcast close room:", err);
+  }finally{
+    setTimeout(() => supabase.removeChannel(ch), 500);
+  }
+}
+
 async function refreshAll(){
   await Promise.all([loadStats(),loadRequests(),loadMembers($("memberSearch").value.trim()),loadRooms()]);
 }
@@ -236,8 +270,13 @@ $("roomsList").addEventListener("click",async e=>{
   if(!confirm(`Xóa ${type==="voice"?"phòng Voice":"Watch Party"} này?`)) return;
   btn.disabled=true;
   try{
-    const data=await rpc("admin_delete_room",{room_type:type,target_room_id:btn.dataset.id});
+    const roomId = btn.dataset.id;
+    const data=await rpc("admin_delete_room",{room_type:type,target_room_id:roomId});
     if(!data?.ok) throw new Error(data?.message || "Không thể xóa room.");
+
+    // Báo realtime tới host/member đang ở trong room.
+    await broadcastAdminRoomClosed(type, roomId);
+
     await Promise.all([loadRooms(),loadStats()]);
   }catch(err){alert(err.message);}finally{btn.disabled=false;}
 });

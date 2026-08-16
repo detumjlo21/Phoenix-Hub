@@ -5,6 +5,8 @@ let member = null;
 let room = null;
 let activeRoomMeta = null;
 let selectedRoom = null;
+let roomAdminWatchTimer = null;
+let roomRemovedByAdmin = false;
 
 const roomsBox = document.getElementById("voiceRooms");
 const modal = document.getElementById("voiceModal");
@@ -170,10 +172,16 @@ async function connectToRoom(roomId, password=""){
       renderParticipants();
     });
     room.on(RoomEvent.Disconnected, () => {
+      clearInterval(roomAdminWatchTimer);
+      roomAdminWatchTimer = null;
       room = null;
       activeRoomMeta = null;
-      document.body.classList.remove("modal-open");
-      modal.classList.add("hidden");
+
+      if(!roomRemovedByAdmin){
+        document.body.classList.remove("modal-open");
+        modal.classList.add("hidden");
+      }
+
       loadVoiceRooms();
     });
 
@@ -193,6 +201,7 @@ async function connectToRoom(roomId, password=""){
     updateMicButton();
     openModal();
     renderParticipants();
+    startAdminRoomWatch();
   }catch(err){
     showError(err.message || "Không thể vào voice.");
   }
@@ -248,7 +257,61 @@ async function toggleMic(){
   renderParticipants();
 }
 
+
+function startAdminRoomWatch(){
+  clearInterval(roomAdminWatchTimer);
+  roomRemovedByAdmin = false;
+
+  roomAdminWatchTimer = setInterval(async () => {
+    if(!room || !activeRoomMeta?.id) return;
+
+    try{
+      const { data, error } = await supabase.rpc("check_room_active", {
+        room_type: "voice",
+        target_room_id: activeRoomMeta.id
+      });
+
+      if(error) return;
+
+      if(!data?.active){
+        clearInterval(roomAdminWatchTimer);
+        roomAdminWatchTimer = null;
+        roomRemovedByAdmin = true;
+
+        showError(
+          data?.reason === "admin"
+            ? "🛡️ BQT đã đóng phòng Voice này."
+            : "Phòng Voice đã kết thúc."
+        );
+
+        document.getElementById("activeVoiceState").textContent =
+          data?.reason === "admin" ? "BQT đã đóng phòng" : "Phòng đã kết thúc";
+
+        setTimeout(async () => {
+          if(room){
+            try{ await room.disconnect(); }catch{}
+          }
+          room = null;
+          activeRoomMeta = null;
+          document.body.classList.remove("modal-open");
+          modal.classList.add("hidden");
+          roomRemovedByAdmin = false;
+          await loadVoiceRooms();
+          alert(data?.reason === "admin"
+            ? "BQT đã đóng phòng Voice."
+            : "Phòng Voice đã kết thúc.");
+        }, 1200);
+      }
+    }catch(e){
+      console.warn("Admin room watch:", e);
+    }
+  }, 1500);
+}
+
 async function leaveVoice(){
+  clearInterval(roomAdminWatchTimer);
+  roomAdminWatchTimer = null;
+  roomRemovedByAdmin = false;
   if(!room) return closeModal();
   document.querySelectorAll("audio[data-phx-remote-audio='1']").forEach(el => el.remove());
   await room.disconnect();

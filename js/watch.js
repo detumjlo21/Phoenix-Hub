@@ -3,6 +3,7 @@ import { Room, RoomEvent, Track } from "https://cdn.jsdelivr.net/npm/livekit-cli
 
 let me, selectedRoom, activeRoom, channel, player, playerReady = false;
 let suppressUntil = 0, syncTimer = null, hostPublishTimer = null;
+let adminRoomWatchTimer = null;
 let watchVoice = null, currentPassword = "";
 
 const $ = id => document.getElementById(id);
@@ -171,6 +172,7 @@ async function enterRoom(r, password){
   });
 
   startSyncLoop();
+  startAdminRoomWatch();
 }
 
 async function ensureYT(){
@@ -524,6 +526,47 @@ async function disconnectWatchVoice(){
   }
 }
 
+
+function startAdminRoomWatch(){
+  clearInterval(adminRoomWatchTimer);
+
+  adminRoomWatchTimer = setInterval(async () => {
+    if(!activeRoom?.id) return;
+
+    try{
+      const { data, error } = await supabase.rpc("check_room_active", {
+        room_type: "watch",
+        target_room_id: activeRoom.id
+      });
+
+      if(error) return;
+
+      if(!data?.active){
+        clearInterval(adminRoomWatchTimer);
+        adminRoomWatchTimer = null;
+
+        showError(
+          data?.reason === "admin"
+            ? "🛡️ BQT đã đóng Watch Party này."
+            : "Watch Party đã kết thúc."
+        );
+
+        $("watchSyncState").textContent =
+          data?.reason === "admin" ? "BQT đã đóng phòng" : "Phòng đã kết thúc";
+
+        setTimeout(async () => {
+          await leaveRoom();
+          alert(data?.reason === "admin"
+            ? "BQT đã đóng phòng xem phim."
+            : "Phòng xem phim đã kết thúc.");
+        }, 1200);
+      }
+    }catch(e){
+      console.warn("Admin watch room:", e);
+    }
+  }, 1500);
+}
+
 async function closeRoom(){
   if(!activeRoom?.isHost) return;
 
@@ -546,8 +589,10 @@ async function closeRoom(){
 async function leaveRoom(){
   clearInterval(syncTimer);
   clearInterval(hostPublishTimer);
+  clearInterval(adminRoomWatchTimer);
   syncTimer = null;
   hostPublishTimer = null;
+  adminRoomWatchTimer = null;
 
   await disconnectWatchVoice();
 

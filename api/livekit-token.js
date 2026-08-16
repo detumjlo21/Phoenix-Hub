@@ -12,50 +12,103 @@ export default async function handler(req, res) {
   try {
     const bearer = req.headers.authorization || "";
     const accessToken = bearer.startsWith("Bearer ") ? bearer.slice(7) : "";
-    if (!accessToken) return res.status(401).json({ error: "Missing auth token" });
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-      global: { headers: { Authorization: `Bearer ${accessToken}` } },
-      auth: { persistSession: false, autoRefreshToken: false }
-    });
-
-    const { data: auth, error: authError } = await supabase.auth.getUser(accessToken);
-    if (authError || !auth.user) return res.status(401).json({ error: "Invalid session" });
-
-    const { roomId, password = "" } = req.body || {};
-    if (!roomId) return res.status(400).json({ error: "Missing roomId" });
-
-    const { data: member, error: memberError } = await supabase
-      .from("members")
-      .select("id,display_name,status")
-      .eq("auth_user_id", auth.user.id)
-      .maybeSingle();
-
-    if (memberError || !member || member.status !== "active") {
-      return res.status(403).json({ error: "Member not approved" });
+    if (!accessToken) {
+      return res.status(401).json({ error: "Missing auth token" });
     }
 
-    const { data: joinResult, error: joinError } = await supabase.rpc("join_voice_room", {
-      target_room_id: roomId,
-      room_password: password
-    });
+    const supabase = createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false
+        }
+      }
+    );
 
-    if (joinError) return res.status(403).json({ error: joinError.message });
-    if (!joinResult?.ok) return res.status(403).json({ error: joinResult?.message || "Cannot join room" });
+    const { data: auth, error: authError } =
+      await supabase.auth.getUser(accessToken);
+
+    if (authError || !auth.user) {
+      return res.status(401).json({ error: "Invalid session" });
+    }
+
+    const { roomId, password = "" } = req.body || {};
+
+    if (!roomId) {
+      return res.status(400).json({ error: "Missing roomId" });
+    }
+
+    // V4.2 FIX:
+    // Không SELECT trực tiếp members nữa vì có thể bị RLS chặn.
+    // RPC này chỉ trả member nếu auth.uid() đang là member active.
+    const { data: profileResult, error: profileError } =
+      await supabase.rpc("get_my_member_profile");
+
+    if (profileError) {
+      console.error("get_my_member_profile:", profileError);
+      return res.status(403).json({
+        error: "Member profile check failed"
+      });
+    }
+
+    if (!profileResult?.ok || !profileResult?.member) {
+      return res.status(403).json({
+        error: "Member not approved"
+      });
+    }
+
+    const member = profileResult.member;
+
+    // RPC này kiểm tra lại member + password + room expiry.
+    const { data: joinResult, error: joinError } =
+      await supabase.rpc("join_voice_room", {
+        target_room_id: roomId,
+        room_password: password
+      });
+
+    if (joinError) {
+      console.error("join_voice_room:", joinError);
+      return res.status(403).json({
+        error: joinError.message
+      });
+    }
+
+    if (!joinResult?.ok) {
+      return res.status(403).json({
+        error: joinResult?.message || "Cannot join room"
+      });
+    }
 
     const apiKey = process.env.LIVEKIT_API_KEY;
     const apiSecret = process.env.LIVEKIT_API_SECRET;
     const livekitUrl = process.env.LIVEKIT_URL;
+
     if (!apiKey || !apiSecret || !livekitUrl) {
-      return res.status(500).json({ error: "LiveKit env missing" });
+      return res.status(500).json({
+        error: "LiveKit env missing"
+      });
     }
 
-    const token = new AccessToken(apiKey, apiSecret, {
-      identity: member.id,
-      name: member.display_name,
-      ttl: "2h",
-      metadata: JSON.stringify({ phoenixMemberId: member.id })
-    });
+    const token = new AccessToken(
+      apiKey,
+      apiSecret,
+      {
+        identity: member.id,
+        name: member.display_name,
+        ttl: "2h",
+        metadata: JSON.stringify({
+          phoenixMemberId: member.id
+        })
+      }
+    );
 
     token.addGrant({
       roomJoin: true,
@@ -71,8 +124,11 @@ export default async function handler(req, res) {
       room: joinResult.room,
       isHost: joinResult.is_host === true
     });
+
   } catch (err) {
     console.error("livekit-token:", err);
-    return res.status(500).json({ error: "Token generation failed" });
+    return res.status(500).json({
+      error: "Token generation failed"
+    });
   }
 }

@@ -213,6 +213,7 @@ async function loadPlayer(){
     },
     events: {
       onReady: () => {
+          if(activeRoom?.isHost){ setTimeout(recoverHostYouTubePlayer, 250); startHostPlayerHealthCheck(); }
         playerReady = true;
 
         // Bảo đảm video thực sự được load sau khi iframe sẵn sàng.
@@ -337,6 +338,76 @@ async function refreshViewerState(){
   if(error || !data?.room) return;
   activeRoom = { ...activeRoom, ...data.room, isHost: false };
   applyState(data.room);
+}
+
+
+
+function explainYouTubeError(code){
+  const map = {
+    2: "Link hoặc ID YouTube không hợp lệ.",
+    5: "YouTube không thể phát video này bằng HTML5.",
+    100: "Video đã bị xóa hoặc đang ở chế độ riêng tư.",
+    101: "Chủ video không cho phép phát nhúng trên website.",
+    150: "Chủ video không cho phép phát nhúng trên website.",
+    153: "YouTube từ chối player do cấu hình/referrer."
+  };
+  return map[code] || `YouTube Player lỗi ${code}.`;
+}
+
+function getWatchVideoId(){
+  return activeRoom?.youtubeId || activeRoom?.youtube_id || activeRoom?.youtube_video_id || null;
+}
+
+function recoverHostYouTubePlayer(){
+  if(!activeRoom?.isHost || !player) return;
+
+  const videoId = getWatchVideoId();
+  if(!videoId) return;
+
+  let state = -1;
+  let pos = 0;
+
+  try{ state = player.getPlayerState(); }catch{}
+  try{ pos = Number(player.getCurrentTime() || 0); }catch{}
+
+  // YouTube UNSTARTED/CUED + màn hình đen: nạp lại video cho Host.
+  if(state === -1 || state === 5){
+    try{
+      if(activeRoom?.playbackStatus === "playing" || activeRoom?.playback_status === "playing"){
+        player.loadVideoById({
+          videoId,
+          startSeconds: Math.max(0, pos || Number(activeRoom?.playbackPosition || activeRoom?.playback_position || 0))
+        });
+      }else{
+        player.cueVideoById({
+          videoId,
+          startSeconds: Math.max(0, pos || Number(activeRoom?.playbackPosition || activeRoom?.playback_position || 0))
+        });
+      }
+    }catch(err){
+      console.warn("Host YouTube recovery:", err);
+    }
+  }
+}
+
+function startHostPlayerHealthCheck(){
+  if(!activeRoom?.isHost) return;
+
+  setTimeout(() => {
+    if(!activeRoom?.isHost || !player) return;
+    recoverHostYouTubePlayer();
+  }, 1800);
+
+  setTimeout(() => {
+    if(!activeRoom?.isHost || !player) return;
+
+    try{
+      const state = player.getPlayerState();
+      if(state === -1){
+        showError("YouTube chưa tải được video. Hãy thử đóng phòng và tạo lại bằng link YouTube hợp lệ.");
+      }
+    }catch{}
+  }, 5000);
 }
 
 function startSyncLoop(){

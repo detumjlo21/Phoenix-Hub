@@ -106,11 +106,61 @@
       </form>
       <div id="joinWatchPanel" class="hidden"><p id="joinWatchText" class="modal-copy"></p><label id="joinWatchPasswordWrap" class="modal-label hidden">Mật khẩu phòng<input id="joinWatchPassword" type="password" placeholder="Nhập mật khẩu"></label><div class="modal-actions"><button id="joinWatchConfirm" class="primary">Vào xem</button></div></div>
       <div id="activeWatchPanel" class="hidden">
-        <div class="watch-room-head"><div><span class="watch-live">● WATCH PARTY</span><h3 id="activeWatchName">Phòng xem phim</h3><small id="activeWatchHost">Host</small></div><div><b id="watchMemberCount">1</b><small> người đang xem</small></div></div>
-        <div class="youtube-shell"><div id="youtubePlayer"></div></div>
-        <div class="watch-presence"><span>ĐANG XEM</span><div id="watchParticipants"></div></div>
-        <p class="watch-note">Host điều khiển Play / Pause / tua trực tiếp trên YouTube. Thành viên sẽ tự đồng bộ.</p>
-        <div class="voice-control-dock watch-controls"><button id="watchSyncBtn" class="voice-control-btn"><span class="control-icon">↻</span><span class="control-label">Đồng bộ</span></button><button id="closeWatchRoomBtn" class="voice-control-btn host-action hidden"><span class="control-icon">■</span><span class="control-label">Đóng phòng</span></button><button id="leaveWatchBtn" class="voice-control-btn leave-action"><span class="control-icon">↗</span><span class="control-label">Rời phòng</span></button></div>
+        <div class="watch-room-head">
+          <div>
+            <span class="watch-live">● WATCH PARTY</span>
+            <h3 id="activeWatchName">Phòng xem phim</h3>
+            <small id="activeWatchHost">Host</small>
+          </div>
+          <div class="watch-count"><b id="watchMemberCount">1</b><small> người đang xem</small></div>
+        </div>
+
+        <div class="watch-role-row">
+          <span id="watchHostBadge" class="watch-role-badge host hidden">👑 HOST CONTROL</span>
+          <span id="watchViewerBadge" class="watch-role-badge viewer hidden">🔒 ĐANG THEO HOST</span>
+          <span id="watchSyncState" class="watch-sync-state">Đang đồng bộ...</span>
+        </div>
+
+        <div class="youtube-shell watch-player-shell">
+          <div id="youtubePlayer"></div>
+          <div id="viewerControlLock" class="viewer-control-lock hidden">
+            <span>🔒 Video do Host điều khiển</span>
+          </div>
+        </div>
+
+        <div class="watch-voice-bar">
+          <div class="watch-voice-status">
+            <i id="watchVoiceDot"></i>
+            <div>
+              <b>Voice trong phòng</b>
+              <small id="watchVoiceState">Đang kết nối mic...</small>
+            </div>
+          </div>
+          <button id="watchMicBtn" class="watch-mic-btn" type="button">
+            <span id="watchMicIcon">🎙</span>
+            <span id="watchMicLabel">Tắt mic</span>
+          </button>
+        </div>
+
+        <div class="watch-presence">
+          <span>ĐANG XEM & NÓI CHUYỆN</span>
+          <div id="watchParticipants"></div>
+        </div>
+
+        <p class="watch-note">
+          Host là người duy nhất điều khiển video. Thành viên được tự động kéo về đúng thời điểm Host đang xem.
+        </p>
+
+        <div class="voice-control-dock watch-controls">
+          <button id="closeWatchRoomBtn" class="voice-control-btn host-action hidden">
+            <span class="control-icon">■</span>
+            <span class="control-label">Đóng phòng</span>
+          </button>
+          <button id="leaveWatchBtn" class="voice-control-btn leave-action">
+            <span class="control-icon">↗</span>
+            <span class="control-label">Rời phòng</span>
+          </button>
+        </div>
       </div>
       <div id="watchError" class="error hidden"></div>
     </div>

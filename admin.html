@@ -10,7 +10,7 @@
   <header class="topbar">
     <a class="brand" href="./">
       <span class="logo">PHX</span>
-      <span><b>PHOENIX HUB</b><small>BQT</small></span>
+      <span><b>PHOENIX HUB</b><small>BQT Dashboard</small></span>
     </a>
     <div class="header-actions">
       <span id="adminIdentity" class="admin-identity hidden"></span>
@@ -19,26 +19,25 @@
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="wrap admin-wrap">
     <section id="loginPanel" class="admin-login-wrap hidden">
       <div class="admin-login-card">
         <span class="logo large">PHX</span>
         <span class="eyebrow">PHOENIX BQT</span>
         <h1>Đăng nhập Admin.</h1>
-        <p>Dùng tài khoản BQT riêng. Thành viên thường không cần đăng nhập ở đây.</p>
+        <p>Dùng tài khoản BQT riêng để quản lý thành viên và phòng.</p>
 
         <form id="adminLoginForm" class="join-form admin-login-form">
           <label>
             Tài khoản Admin (email)
-            <input id="adminEmail" type="email" autocomplete="username" required placeholder="admin@phoenixhub.vn">
+            <input id="adminEmail" type="email" autocomplete="username" required>
           </label>
           <label>
             Mật khẩu
-            <input id="adminPassword" type="password" autocomplete="current-password" required placeholder="••••••••">
+            <input id="adminPassword" type="password" autocomplete="current-password" required>
           </label>
           <button id="loginBtn" class="primary" type="submit">Đăng nhập BQT</button>
         </form>
-
         <div id="loginError" class="error hidden"></div>
       </div>
     </section>
@@ -46,36 +45,81 @@
     <section id="noAccess" class="gate hidden">
       <div>
         <span class="eyebrow">BQT</span>
-        <h1>Tài khoản không có quyền truy cập.</h1>
-        <p>Tài khoản đã đăng nhập nhưng chưa được gắn quyền Chủ QĐ, Quyền chủ hoặc Tổng quản.</p>
+        <h1>Bạn không có quyền truy cập.</h1>
+        <p>Trang này dành cho Chủ QĐ, Quyền chủ và Tổng quản.</p>
       </div>
       <button id="switchAccountBtn" class="secondary">Đổi tài khoản</button>
     </section>
 
     <div id="adminPanel" class="hidden">
-      <section class="hero compact-hero">
+      <section class="admin-hero">
         <div>
           <span class="eyebrow">BQT PHOENIX</span>
-          <h1>Duyệt thành viên.</h1>
-          <p>Kiểm tra tên, UID và nhánh trước khi duyệt.</p>
+          <h1>Trung tâm quản trị.</h1>
+          <p id="adminScopeText">Quản lý thành viên, yêu cầu tham gia và phòng đang hoạt động.</p>
         </div>
-        <div class="hero-stats">
-          <span>🟡 <b id="pendingCount">0</b> chờ duyệt</span>
-        </div>
+        <button id="refreshAllBtn" class="secondary">↻ Làm mới</button>
       </section>
 
-      <section class="section">
+      <section class="admin-stat-grid">
+        <article><small>THÀNH VIÊN</small><b id="statMembers">0</b><span>đang quản lý</span></article>
+        <article><small>CHỜ DUYỆT</small><b id="statPending">0</b><span>yêu cầu</span></article>
+        <article><small>VOICE</small><b id="statVoice">0</b><span>phòng đang mở</span></article>
+        <article><small>WATCH PARTY</small><b id="statWatch">0</b><span>phòng đang mở</span></article>
+      </section>
+
+      <nav class="admin-tabs" aria-label="BQT sections">
+        <button class="admin-tab active" data-tab="pending">Yêu cầu <span id="pendingBadge">0</span></button>
+        <button class="admin-tab" data-tab="members">Thành viên</button>
+        <button class="admin-tab" data-tab="rooms">Phòng</button>
+      </nav>
+
+      <section id="tab-pending" class="admin-tab-panel">
         <div class="section-head">
           <div><span class="eyebrow">YÊU CẦU</span><h2>Đang chờ duyệt</h2></div>
-          <button id="refreshBtn" class="secondary">Làm mới</button>
         </div>
+        <div id="requests" class="request-list"><div class="skeleton request-skeleton"></div></div>
+      </section>
 
-        <div id="requests" class="request-list">
-          <div class="skeleton request-skeleton"></div>
+      <section id="tab-members" class="admin-tab-panel hidden">
+        <div class="section-head admin-section-head">
+          <div><span class="eyebrow">MEMBERS</span><h2>Quản lý thành viên</h2></div>
+          <div class="admin-search">
+            <input id="memberSearch" placeholder="Tìm tên / UID...">
+            <button id="memberSearchBtn" class="secondary">Tìm</button>
+          </div>
         </div>
+        <div id="membersList" class="admin-member-list"></div>
+      </section>
+
+      <section id="tab-rooms" class="admin-tab-panel hidden">
+        <div class="section-head">
+          <div><span class="eyebrow">ROOMS</span><h2>Phòng đang hoạt động</h2></div>
+        </div>
+        <div id="roomsList" class="admin-room-list"></div>
       </section>
     </div>
   </main>
+
+  <div id="editMemberModal" class="modal hidden">
+    <div class="modal-card admin-edit-modal">
+      <div class="modal-head">
+        <div><span class="eyebrow">CHỈNH THÀNH VIÊN</span><h2>Đổi tên</h2></div>
+        <button id="editMemberClose" class="icon-button">✕</button>
+      </div>
+      <form id="editMemberForm" class="join-form">
+        <input id="editMemberId" type="hidden">
+        <label>Tên hiển thị
+          <input id="editDisplayName" maxlength="32" required>
+        </label>
+        <label>Tên ingame
+          <input id="editIngameName" maxlength="32" required>
+        </label>
+        <button id="editMemberSave" class="primary" type="submit">Lưu thay đổi</button>
+      </form>
+      <div id="editMemberError" class="error hidden"></div>
+    </div>
+  </div>
 
   <script type="module" src="js/admin.js"></script>
 </body>

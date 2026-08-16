@@ -121,11 +121,29 @@
           <span id="watchSyncState" class="watch-sync-state">Đang đồng bộ...</span>
         </div>
 
-        <div class="youtube-shell watch-player-shell">
+        <div id="watchPlayerShell" class="youtube-shell watch-player-shell">
           <div id="youtubePlayer"></div>
           <div id="viewerControlLock" class="viewer-control-lock hidden">
             <span>🔒 Video do Host điều khiển</span>
           </div>
+        </div>
+
+        <div id="viewerMediaControls" class="viewer-media-controls hidden">
+          <button id="viewerMuteBtn" class="viewer-media-btn" type="button">
+            <span id="viewerMuteIcon">🔊</span>
+            <span>Âm thanh</span>
+          </button>
+
+          <label class="viewer-volume">
+            <span>Âm lượng</span>
+            <input id="viewerVolume" type="range" min="0" max="100" value="80">
+            <b id="viewerVolumeValue">80%</b>
+          </label>
+
+          <button id="viewerFullscreenBtn" class="viewer-media-btn viewer-fullscreen-btn" type="button">
+            <span>⛶</span>
+            <span>Toàn màn hình</span>
+          </button>
         </div>
 
         <div class="watch-voice-bar">

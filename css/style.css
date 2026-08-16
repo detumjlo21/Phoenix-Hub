@@ -602,3 +602,99 @@ button,input,select{font:inherit}.hidden{display:none!important}.topbar{height:7
 .account-summary small{font-size:7px;letter-spacing:1px;color:#6f7886}
 .account-summary b{font-size:18px;margin:6px 0;color:#fff;user-select:all}
 .account-summary span{font-size:9px;color:#858e9b}
+
+
+/* =========================================================
+   WATCH PARTY V5.3.4 — VIEWER VOLUME + FULLSCREEN
+   ========================================================= */
+.viewer-media-controls{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:10px;
+  align-items:center;
+  margin-top:10px;
+  padding:10px;
+  border:1px solid #292f39;
+  border-radius:14px;
+  background:#12151b;
+}
+
+.viewer-media-btn{
+  min-height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:0 12px;
+  border:1px solid #343b47;
+  border-radius:10px;
+  background:#1b1f27;
+  color:#edf0f5;
+  font-size:8px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.viewer-media-btn:hover{
+  background:#232832;
+}
+
+.viewer-volume{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:9px;
+  color:#808997;
+  font-size:8px;
+}
+
+.viewer-volume input{
+  width:100%;
+  accent-color:#ff3b4f;
+}
+
+.viewer-volume b{
+  min-width:34px;
+  text-align:right;
+  color:#dce1e7;
+  font-size:8px;
+}
+
+.watch-player-shell:fullscreen,
+.watch-player-shell:-webkit-full-screen{
+  width:100vw!important;
+  height:100vh!important;
+  max-width:none!important;
+  border-radius:0!important;
+  background:#000;
+}
+
+.watch-player-shell:fullscreen #youtubePlayer,
+.watch-player-shell:fullscreen iframe,
+.watch-player-shell:-webkit-full-screen #youtubePlayer,
+.watch-player-shell:-webkit-full-screen iframe{
+  width:100%!important;
+  height:100%!important;
+}
+
+.watch-player-shell:fullscreen .viewer-control-lock,
+.watch-player-shell:-webkit-full-screen .viewer-control-lock{
+  align-items:flex-start;
+  justify-content:center;
+  padding-top:12px;
+  padding-bottom:0;
+}
+
+@media(max-width:640px){
+  .viewer-media-controls{
+    grid-template-columns:auto 1fr;
+  }
+
+  .viewer-fullscreen-btn{
+    grid-column:1/-1;
+  }
+
+  .viewer-media-btn{
+    min-height:42px;
+  }
+}

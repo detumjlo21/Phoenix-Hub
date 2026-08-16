@@ -231,6 +231,14 @@ async function loadPlayer(){
         }, 250);
 
         $("viewerControlLock").classList.toggle("hidden", isHost);
+        $("viewerMediaControls").classList.toggle("hidden", isHost);
+
+        if(!isHost){
+          try{
+            player.setVolume(Number($("viewerVolume").value || 80));
+          }catch{}
+          updateViewerVolumeUI();
+        }
       },
       onStateChange: onPlayerState,
       onError: onYoutubeError
@@ -459,6 +467,113 @@ function renderPresence(){
   if(!watchVoice){
     $("watchParticipants").innerHTML =
       people.map(p => `<span>${esc(p.name)}</span>`).join("");
+  }
+}
+
+
+/* =========================
+   VIEWER LOCAL MEDIA CONTROLS
+   Viewer chỉ chỉnh âm lượng/fullscreen trên máy mình.
+   Không thay đổi trạng thái Host.
+   ========================= */
+
+function updateViewerVolumeUI(){
+  if(!player || activeRoom?.isHost) return;
+
+  let volume = Number($("viewerVolume")?.value || 80);
+  let muted = false;
+
+  try{
+    volume = Number(player.getVolume());
+    muted = player.isMuted();
+  }catch{}
+
+  $("viewerVolume").value = String(volume);
+  $("viewerVolumeValue").textContent = `${Math.round(volume)}%`;
+  $("viewerMuteIcon").textContent = muted || volume === 0 ? "🔇" : (volume < 45 ? "🔉" : "🔊");
+}
+
+function setViewerVolume(){
+  if(!player || activeRoom?.isHost) return;
+
+  const value = Number($("viewerVolume").value || 0);
+
+  try{
+    player.setVolume(value);
+    if(value > 0 && player.isMuted()) player.unMute();
+  }catch{}
+
+  updateViewerVolumeUI();
+}
+
+function toggleViewerMute(){
+  if(!player || activeRoom?.isHost) return;
+
+  try{
+    if(player.isMuted()){
+      player.unMute();
+      if(player.getVolume() === 0) player.setVolume(80);
+    }else{
+      player.mute();
+    }
+  }catch{}
+
+  updateViewerVolumeUI();
+}
+
+async function requestViewerFullscreen(){
+  if(activeRoom?.isHost) return;
+
+  const shell = $("watchPlayerShell");
+  const iframe = shell?.querySelector("iframe");
+
+  try{
+    if(!document.fullscreenElement){
+      if(shell?.requestFullscreen){
+        await shell.requestFullscreen();
+      }else if(shell?.webkitRequestFullscreen){
+        shell.webkitRequestFullscreen();
+      }else if(iframe?.webkitEnterFullscreen){
+        // iOS fallback.
+        iframe.webkitEnterFullscreen();
+      }
+    }else{
+      if(document.exitFullscreen) await document.exitFullscreen();
+      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+      return;
+    }
+  }catch(err){
+    console.warn("Fullscreen:", err);
+
+    // iOS/Safari fallback: thử fullscreen trực tiếp video iframe.
+    try{
+      if(iframe?.webkitEnterFullscreen) iframe.webkitEnterFullscreen();
+    }catch{}
+  }
+
+  // Android/Chrome: thử khóa ngang khi fullscreen.
+  try{
+    if(screen.orientation?.lock){
+      await screen.orientation.lock("landscape");
+    }
+  }catch{
+    // Máy không hỗ trợ/không cho lock orientation; user vẫn có thể xoay nếu bật auto-rotate.
+  }
+}
+
+function onViewerFullscreenChange(){
+  const active = !!(document.fullscreenElement || document.webkitFullscreenElement);
+
+  if(!active){
+    try{
+      if(screen.orientation?.unlock) screen.orientation.unlock();
+    }catch{}
+  }
+
+  const btn = $("viewerFullscreenBtn");
+  if(btn){
+    const label = btn.querySelector("span:last-child");
+    if(label) label.textContent = active ? "Thoát toàn màn hình" : "Toàn màn hình";
   }
 }
 
@@ -724,6 +839,13 @@ async function leaveRoom(){
   activeRoom = null;
   currentPassword = "";
 
+  $("viewerMediaControls").classList.add("hidden");
+
+  try{
+    if(document.fullscreenElement) await document.exitFullscreen();
+    if(screen.orientation?.unlock) screen.orientation.unlock();
+  }catch{}
+
   resetPanels();
   $("watchModal").classList.add("hidden");
   document.body.classList.remove("modal-open");
@@ -739,6 +861,13 @@ export async function initWatch(member){
   $("leaveWatchBtn").onclick = leaveRoom;
   $("closeWatchRoomBtn").onclick = closeRoom;
   $("watchMicBtn").onclick = toggleWatchMic;
+
+  $("viewerVolume").addEventListener("input", setViewerVolume);
+  $("viewerMuteBtn").onclick = toggleViewerMute;
+  $("viewerFullscreenBtn").onclick = requestViewerFullscreen;
+
+  document.addEventListener("fullscreenchange", onViewerFullscreenChange);
+  document.addEventListener("webkitfullscreenchange", onViewerFullscreenChange);
 
   await listRooms();
 

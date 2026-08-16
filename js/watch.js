@@ -302,9 +302,9 @@ function applyState(st, force = false){
   const here = Number(player.getCurrentTime?.() || 0);
   const drift = Math.abs(here - pos);
 
-  // Viewer luôn bị kéo về Host nếu lệch > 1.4s.
+  // Viewer luôn bị kéo về Host nếu lệch > 0.35s.
   // Host chỉ seek khi vừa load room.
-  if(force || (!activeRoom.isHost && drift > 1.4)){
+  if(force || (!activeRoom.isHost && drift > 0.35)){
     player.seekTo(Math.max(0, pos), true);
   }
 
@@ -344,9 +344,9 @@ function startSyncLoop(){
       const state = player.getPlayerState();
       const status = state === YT.PlayerState.PLAYING ? "playing" : "paused";
       sendState(status);
-    }, 2500);
+    }, 500);
   }else{
-    syncTimer = setInterval(refreshViewerState, 2000);
+    syncTimer = setInterval(refreshViewerState, 500);
   }
 }
 

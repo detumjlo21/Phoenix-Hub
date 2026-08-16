@@ -121,6 +121,40 @@
     </div>
   </div>
 
+
+  <div id="resetPasswordModal" class="modal hidden">
+    <div class="modal-card admin-edit-modal">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">TÀI KHOẢN THÀNH VIÊN</span>
+          <h2>Đặt lại mật khẩu</h2>
+        </div>
+        <button id="resetPasswordClose" class="icon-button">✕</button>
+      </div>
+
+      <div class="account-summary">
+        <small>TÀI KHOẢN ĐĂNG NHẬP</small>
+        <b id="resetAccountUid">—</b>
+        <span id="resetAccountName">—</span>
+      </div>
+
+      <form id="resetPasswordForm" class="join-form">
+        <input id="resetMemberId" type="hidden">
+        <label>
+          Mật khẩu mới
+          <input id="resetNewPassword" type="password" minlength="6" maxlength="72" required placeholder="Tối thiểu 6 ký tự">
+        </label>
+        <label>
+          Nhập lại mật khẩu mới
+          <input id="resetNewPassword2" type="password" minlength="6" maxlength="72" required placeholder="Nhập lại mật khẩu">
+        </label>
+        <button id="resetPasswordSave" class="primary" type="submit">Đặt lại mật khẩu</button>
+      </form>
+
+      <div id="resetPasswordError" class="error hidden"></div>
+    </div>
+  </div>
+
   <script type="module" src="js/admin.js"></script>
 </body>
 </html>

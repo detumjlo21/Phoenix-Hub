@@ -588,3 +588,17 @@ button,input,select{font:inherit}.hidden{display:none!important}.topbar{height:7
 
 .field-help{display:block;margin-top:6px;color:#77808d;font-size:8px;line-height:1.5}
 .field-help b{color:#ff6575;user-select:all}
+
+.member-login-id{margin-top:5px!important;color:#8f98a6!important}
+.member-login-id strong{color:#eef1f5;user-select:all}
+.account-summary{
+  margin:18px 0 4px;
+  padding:14px;
+  border:1px solid #292f39;
+  border-radius:14px;
+  background:#14171d;
+}
+.account-summary small,.account-summary b,.account-summary span{display:block}
+.account-summary small{font-size:7px;letter-spacing:1px;color:#6f7886}
+.account-summary b{font-size:18px;margin:6px 0;color:#fff;user-select:all}
+.account-summary span{font-size:9px;color:#858e9b}

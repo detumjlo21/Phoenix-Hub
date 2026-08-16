@@ -85,7 +85,8 @@ async function loadMembers(search=""){
       <div class="admin-member-avatar">${esc((m.display_name||"?").slice(0,1).toUpperCase())}</div>
       <div class="admin-member-main">
         <b>${esc(m.display_name)}</b>
-        <small>${esc(m.ingame_name || "—")} · UID ${esc(m.freefire_uid)}</small>
+        <small>${esc(m.ingame_name || "—")}</small>
+        <small class="member-login-id">Tài khoản: <strong>${esc(m.freefire_uid)}</strong></small>
       </div>
       <div class="admin-member-meta">
         <span>${esc(m.branch_name)}</span>
@@ -94,6 +95,7 @@ async function loadMembers(search=""){
       </div>
       <div class="admin-member-actions">
         <button class="secondary" data-member-action="edit" data-id="${m.id}">Đổi tên</button>
+        <button class="secondary" data-member-action="reset-password" data-id="${m.id}">Đặt lại MK</button>
         <button class="danger" data-member-action="delete" data-id="${m.id}" ${m.is_global_admin ? "disabled" : ""}>Xóa</button>
       </div>
     </article>`).join("");
@@ -204,6 +206,18 @@ $("membersList").addEventListener("click",async e=>{
     return;
   }
 
+  if(btn.dataset.memberAction==="reset-password"){
+    $("resetMemberId").value = m.id;
+    $("resetAccountUid").textContent = m.freefire_uid || "—";
+    $("resetAccountName").textContent = m.display_name || "—";
+    $("resetNewPassword").value = "";
+    $("resetNewPassword2").value = "";
+    $("resetPasswordError").classList.add("hidden");
+    $("resetPasswordModal").classList.remove("hidden");
+    document.body.classList.add("modal-open");
+    return;
+  }
+
   if(btn.dataset.memberAction==="delete"){
     if(!confirm(`Xóa thành viên "${m.display_name}"?\n\nThao tác này sẽ xóa hồ sơ thành viên và các room do người này tạo.`)) return;
     btn.disabled=true;
@@ -247,6 +261,63 @@ $("editMemberForm").addEventListener("submit",async e=>{
     $("editMemberError").classList.remove("hidden");
   }finally{$("editMemberSave").disabled=false;}
 });
+
+
+$("resetPasswordForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  $("resetPasswordError").classList.add("hidden");
+
+  const p1 = $("resetNewPassword").value;
+  const p2 = $("resetNewPassword2").value;
+
+  if(p1.length < 6){
+    $("resetPasswordError").textContent = "Mật khẩu tối thiểu 6 ký tự.";
+    $("resetPasswordError").classList.remove("hidden");
+    return;
+  }
+  if(p1 !== p2){
+    $("resetPasswordError").textContent = "Hai mật khẩu không giống nhau.";
+    $("resetPasswordError").classList.remove("hidden");
+    return;
+  }
+
+  $("resetPasswordSave").disabled = true;
+
+  try{
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    if(!accessToken) throw new Error("Phiên BQT đã hết hạn.");
+
+    const response = await fetch("/api/admin-reset-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        memberId: $("resetMemberId").value,
+        newPassword: p1
+      })
+    });
+
+    const result = await response.json();
+    if(!response.ok) throw new Error(result.error || "Không thể đặt lại mật khẩu.");
+
+    $("resetPasswordModal").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+    alert("Đã đặt lại mật khẩu thành công.");
+  }catch(err){
+    $("resetPasswordError").textContent = err.message || "Không thể đặt lại mật khẩu.";
+    $("resetPasswordError").classList.remove("hidden");
+  }finally{
+    $("resetPasswordSave").disabled = false;
+  }
+});
+
+$("resetPasswordClose").onclick=()=>{
+  $("resetPasswordModal").classList.add("hidden");
+  document.body.classList.remove("modal-open");
+};
 
 $("editMemberClose").onclick=()=>{
   $("editMemberModal").classList.add("hidden");

@@ -37,9 +37,8 @@ begin
     return jsonb_build_object('ok',false,'message','UID không hợp lệ.');
   end if;
 
-  if char_length(trim(coalesce(new_display_name,''))) not between 2 and 32
-     or char_length(trim(coalesce(new_ingame_name,''))) not between 2 and 32 then
-    return jsonb_build_object('ok',false,'message','Tên phải từ 2 đến 32 ký tự.');
+  if char_length(trim(coalesce(new_ingame_name,''))) not between 2 and 24 then
+    return jsonb_build_object('ok',false,'message','Tên ingame phải từ 2 đến 24 ký tự.');
   end if;
 
   if not exists(select 1 from public.branches where id=target_branch_id) then
@@ -77,7 +76,7 @@ begin
   )
   values(
     uid,
-    trim(new_display_name),
+    ('PHX丶' || trim(new_ingame_name) || ' 禄'),
     game_uid,
     target_branch_id,
     'pending'
@@ -120,9 +119,8 @@ begin
     return jsonb_build_object('ok',false,'message','UID không hợp lệ.');
   end if;
 
-  if char_length(trim(coalesce(new_display_name,''))) not between 2 and 32
-     or char_length(trim(coalesce(new_ingame_name,''))) not between 2 and 32 then
-    return jsonb_build_object('ok',false,'message','Tên phải từ 2 đến 32 ký tự.');
+  if char_length(trim(coalesce(new_ingame_name,''))) not between 2 and 24 then
+    return jsonb_build_object('ok',false,'message','Tên ingame phải từ 2 đến 24 ký tự.');
   end if;
 
   if not exists(select 1 from public.branches where id=target_branch_id) then
@@ -145,7 +143,7 @@ begin
     auth_user_id,display_name,ingame_name,freefire_uid,branch_id,status
   )
   values(
-    uid,trim(new_display_name),trim(new_ingame_name),game_uid,target_branch_id,'pending'
+    uid,('PHX丶' || trim(new_ingame_name) || ' 禄'),trim(new_ingame_name),game_uid,target_branch_id,'pending'
   )
   returning id into rid;
 

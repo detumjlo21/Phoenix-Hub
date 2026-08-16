@@ -585,3 +585,6 @@ button,input,select{font:inherit}.hidden{display:none!important}.topbar{height:7
   .auth-grid{grid-template-columns:1fr}
   .auth-brand h1{font-size:24px}
 }
+
+.field-help{display:block;margin-top:6px;color:#77808d;font-size:8px;line-height:1.5}
+.field-help b{color:#ff6575;user-select:all}

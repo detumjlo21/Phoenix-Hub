@@ -14,7 +14,7 @@
         <div><span class="eyebrow">PHOENIX HUB</span><h1>Đăng ký thành viên.</h1></div>
       </div>
 
-      <p class="auth-lead">UID game sẽ là tài khoản đăng nhập của bạn. Mỗi UID chỉ đăng ký một lần.</p>
+      <p class="auth-lead">UID game là tài khoản đăng nhập. Bạn chỉ cần nhập tên game; hệ thống tự tạo tên PHOENIX để mọi người dễ sao chép.</p>
 
       <form id="registerForm" class="join-form auth-form">
         <div class="auth-grid">
@@ -25,16 +25,11 @@
 
           <label>
             Tên ingame
-            <input id="registerIngame" required maxlength="32" placeholder="VD: PHX.Louis">
+            <input id="registerIngame" required maxlength="24" placeholder="VD: Louis">
+            <small class="field-help">Hệ thống sẽ hiển thị: <b>PHX丶TênGame 禄</b></small>
           </label>
         </div>
-
-        <label>
-          Tên hiển thị
-          <input id="registerDisplay" required maxlength="32" placeholder="Tên mọi người sẽ thấy trong Hub">
-        </label>
-
-        <label>
+<label>
           Nhánh đang tham gia
           <select id="registerBranch" required>
             <option value="">Đang tải 3 nhánh...</option>

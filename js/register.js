@@ -37,13 +37,13 @@ form.addEventListener("submit", async (e) => {
 
   const uid = document.getElementById("registerUid").value.trim();
   const ingame = document.getElementById("registerIngame").value.trim();
-  const display = document.getElementById("registerDisplay").value.trim();
+  const display = `PHX丶${ingame} 禄`;
   const branchId = Number(branchSelect.value);
   const password = document.getElementById("registerPassword").value;
   const password2 = document.getElementById("registerPassword2").value;
 
   if(!/^[0-9A-Za-z_-]{4,24}$/.test(uid)) return showError("UID game không hợp lệ.");
-  if(display.length < 2 || ingame.length < 2) return showError("Tên phải có ít nhất 2 ký tự.");
+  if(ingame.length < 2) return showError("Tên ingame phải có ít nhất 2 ký tự.");
   if(!branchId) return showError("Hãy chọn nhánh.");
   if(password.length < 6) return showError("Mật khẩu tối thiểu 6 ký tự.");
   if(password !== password2) return showError("Hai mật khẩu không giống nhau.");

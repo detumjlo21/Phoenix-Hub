@@ -192,21 +192,42 @@ async function loadPlayer(){
 
   player = new YT.Player("youtubePlayer", {
     videoId: activeRoom.youtubeId,
+    host: "https://www.youtube.com",
     playerVars: {
       playsinline: 1,
       rel: 0,
       modestbranding: 1,
       controls: isHost ? 1 : 0,
       disablekb: isHost ? 0 : 1,
-      fs: 1
+      fs: 1,
+
+      // Quan trọng cho YouTube Error 153:
+      // xác định rõ website đang nhúng player.
+      origin: window.location.origin,
+      widget_referrer: window.location.href
     },
     events: {
       onReady: () => {
         playerReady = true;
-        applyState(activeRoom, true);
+
+        // Bảo đảm video thực sự được load sau khi iframe sẵn sàng.
+        try{
+          player.cueVideoById({
+            videoId: activeRoom.youtubeId,
+            startSeconds: Math.max(0, expectedPosition(activeRoom))
+          });
+        }catch(e){
+          console.warn("cueVideoById:", e);
+        }
+
+        setTimeout(() => {
+          applyState(activeRoom, true);
+        }, 250);
+
         $("viewerControlLock").classList.toggle("hidden", isHost);
       },
-      onStateChange: onPlayerState
+      onStateChange: onPlayerState,
+      onError: onYoutubeError
     }
   });
 }
@@ -218,6 +239,29 @@ function onPlayerState(e){
     sendState("playing");
   }else if(e.data === YT.PlayerState.PAUSED){
     sendState("paused");
+  }
+}
+
+function onYoutubeError(e){
+  const messages = {
+    2: "Link/video YouTube không hợp lệ.",
+    5: "Trình duyệt không phát được video HTML5 này.",
+    100: "Video đã bị xóa hoặc đặt riêng tư.",
+    101: "Chủ video không cho phép phát trên website khác.",
+    150: "Chủ video không cho phép phát trên website khác.",
+    153: "YouTube không nhận diện được website nhúng player."
+  };
+
+  const message = messages[e.data] || `YouTube Player Error ${e.data}`;
+  console.error("YouTube player error:", e.data);
+
+  if(e.data === 153){
+    showError(
+      message +
+      " Hãy mở PHOENIX Hub bằng Chrome/Safari thay vì trình duyệt bên trong Messenger nếu lỗi vẫn xuất hiện."
+    );
+  }else{
+    showError(message);
   }
 }
 

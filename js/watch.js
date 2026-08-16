@@ -1,0 +1,38 @@
+import { supabase } from "./supabaseClient.js";
+
+let me, selectedRoom, activeRoom, channel, player, playerReady=false, suppressUntil=0, syncTimer;
+const $=id=>document.getElementById(id);
+const errBox=()=>$("watchError");
+function showError(msg){ const e=errBox(); e.textContent=msg; e.classList.remove("hidden"); }
+function clearError(){ errBox().classList.add("hidden"); errBox().textContent=""; }
+function ytId(input){
+  try{ const u=new URL(input.trim()); if(u.hostname.includes("youtu.be")) return u.pathname.slice(1).split("/")[0]; if(u.hostname.includes("youtube.com")){ if(u.pathname==="/watch") return u.searchParams.get("v"); const m=u.pathname.match(/\/(?:embed|shorts|live)\/([^/?]+)/); if(m)return m[1]; }}catch{}
+  return /^[A-Za-z0-9_-]{11}$/.test(input.trim())?input.trim():null;
+}
+function openModal(){ $("watchModal").classList.remove("hidden"); document.body.classList.add("modal-open"); }
+function closeModal(){ if(activeRoom) leaveRoom(); $("watchModal").classList.add("hidden"); document.body.classList.remove("modal-open"); resetPanels(); }
+function resetPanels(){ ["createWatchForm","joinWatchPanel","activeWatchPanel"].forEach(id=>$(id).classList.add("hidden")); clearError(); }
+function showCreate(){ resetPanels(); $("createWatchForm").classList.remove("hidden"); $("watchModalTitle").textContent="Tạo phòng xem phim"; openModal(); }
+async function listRooms(){
+ const {data,error}=await supabase.rpc("list_watch_rooms"); if(error){$("watchRooms").innerHTML=`<div class="empty-card"><b>Không tải được phòng xem phim</b><p>${error.message}</p></div>`;return;}
+ const box=$("watchRooms"); if(!data?.length){box.innerHTML='<div class="empty-card"><div class="big-icon">🎬</div><b>Chưa có phòng xem phim</b><p>Tạo phòng YouTube đầu tiên và xem cùng anh em.</p></div>';return;}
+ box.innerHTML=data.map(r=>`<article class="watch-card"><img src="https://i.ytimg.com/vi/${r.youtube_id}/mqdefault.jpg" alt=""><div class="watch-card-main"><b>${esc(r.name)}</b><small>Host: ${esc(r.host_name)} · YouTube</small></div><span>${r.has_password?'🔒':'🌐'}</span><button class="primary watch-join" data-id="${r.id}">Vào xem</button></article>`).join("");
+ box.querySelectorAll(".watch-join").forEach(b=>b.onclick=()=>prepareJoin(data.find(r=>r.id===b.dataset.id)));
+}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function prepareJoin(r){ selectedRoom=r; resetPanels(); $("joinWatchPanel").classList.remove("hidden"); $("watchModalTitle").textContent="Vào phòng xem phim"; $("joinWatchText").textContent=`${r.name} · Host: ${r.host_name}`; $("joinWatchPasswordWrap").classList.toggle("hidden",!r.has_password); $("joinWatchPassword").value=""; openModal(); }
+async function createRoom(ev){ ev.preventDefault(); clearError(); const id=ytId($("watchYoutubeUrl").value); if(!id)return showError("Link YouTube không hợp lệ.");
+ const {data,error}=await supabase.rpc("create_watch_room",{room_name:$("watchRoomName").value, youtube_video_id:id, room_password:$("watchRoomPassword").value||"", duration_minutes:Number($("watchRoomDuration").value)}); if(error)return showError(error.message); await listRooms(); const rooms=(await supabase.rpc("list_watch_rooms")).data||[]; const r=rooms.find(x=>x.id===data.id); if(r) await enterRoom(r,"");
+}
+async function joinSelected(){ if(!selectedRoom)return; await enterRoom(selectedRoom,$("joinWatchPassword").value||""); }
+async function enterRoom(r,password){ clearError(); const {data,error}=await supabase.rpc("join_watch_room",{target_room_id:r.id,room_password:password}); if(error)return showError(error.message); if(!data?.ok)return showError(data?.message||"Không vào được phòng."); activeRoom={...data.room,isHost:data.is_host}; resetPanels(); $("activeWatchPanel").classList.remove("hidden"); $("watchModalTitle").textContent="Đang xem cùng nhau"; $("activeWatchName").textContent=activeRoom.name; $("activeWatchHost").textContent=`Host: ${activeRoom.hostName}`; $("closeWatchRoomBtn").classList.toggle("hidden",!activeRoom.isHost); openModal(); await setupRealtime(); await loadPlayer(); }
+async function ensureYT(){ if(window.YT?.Player)return; await new Promise(resolve=>{window.onYouTubeIframeAPIReady=resolve; const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";document.head.appendChild(s);}); }
+async function loadPlayer(){ await ensureYT(); playerReady=false; $("youtubePlayer").innerHTML=""; player=new YT.Player("youtubePlayer",{videoId:activeRoom.youtubeId,playerVars:{playsinline:1,rel:0,modestbranding:1},events:{onReady:()=>{playerReady=true; applyState(activeRoom);},onStateChange:onPlayerState}}); }
+function onPlayerState(e){ if(!activeRoom?.isHost||Date.now()<suppressUntil)return; if(e.data===YT.PlayerState.PLAYING) sendState("playing"); else if(e.data===YT.PlayerState.PAUSED) sendState("paused"); }
+async function sendState(status){ if(!playerReady)return; const pos=player.getCurrentTime()||0; const {data,error}=await supabase.rpc("update_watch_state",{target_room_id:activeRoom.id,new_status:status,new_position:pos}); if(error)return showError(error.message); activeRoom={...activeRoom,...data.state}; channel?.send({type:"broadcast",event:"sync",payload:data.state}); }
+function applyState(st){ if(!playerReady||!st)return; suppressUntil=Date.now()+1200; let pos=Number(st.position||0); if(st.status==="playing"&&st.updatedAt) pos+=(Date.now()-new Date(st.updatedAt).getTime())/1000; if(Math.abs((player.getCurrentTime?.()||0)-pos)>2)player.seekTo(Math.max(0,pos),true); if(st.status==="playing")player.playVideo(); else player.pauseVideo(); }
+async function setupRealtime(){ if(channel)await supabase.removeChannel(channel); channel=supabase.channel(`watch:${activeRoom.id}`,{config:{presence:{key:me.id}}}); channel.on("presence",{event:"sync"},renderPresence).on("broadcast",{event:"sync"},({payload})=>{if(!activeRoom.isHost)applyState(payload)}).on("broadcast",{event:"closed"},()=>{showError("Host đã đóng phòng."); setTimeout(leaveRoom,1200)}); await channel.subscribe(async status=>{if(status==="SUBSCRIBED")await channel.track({name:me.display_name,at:Date.now()});}); }
+function renderPresence(){ const state=channel?.presenceState()||{}; const people=Object.values(state).flat(); $("watchMemberCount").textContent=people.length; $("watchParticipants").innerHTML=people.map(p=>`<span>${esc(p.name)}</span>`).join(""); }
+async function closeRoom(){ if(!activeRoom?.isHost)return; const {error}=await supabase.rpc("close_watch_room",{target_room_id:activeRoom.id}); if(error)return showError(error.message); await channel?.send({type:"broadcast",event:"closed",payload:{}}); await leaveRoom(); await listRooms(); }
+async function leaveRoom(){ clearInterval(syncTimer); if(channel){await supabase.removeChannel(channel);channel=null;} try{player?.destroy()}catch{} player=null;playerReady=false;activeRoom=null; resetPanels(); $("watchModal").classList.add("hidden");document.body.classList.remove("modal-open"); }
+export async function initWatch(member){ me=member; $("createWatchBtn").onclick=showCreate; $("watchModalClose").onclick=closeModal; $("createWatchForm").onsubmit=createRoom; $("joinWatchConfirm").onclick=joinSelected; $("leaveWatchBtn").onclick=leaveRoom; $("closeWatchRoomBtn").onclick=closeRoom; $("watchSyncBtn").onclick=async()=>{if(activeRoom?.isHost)await sendState(player?.getPlayerState()===1?"playing":"paused");else{const {data,error}=await supabase.rpc("join_watch_room",{target_room_id:activeRoom.id,room_password:""});if(!error&&data?.room)applyState(data.room)}}; await listRooms(); setInterval(()=>{if(!activeRoom)listRooms()},30000); }

@@ -1,5 +1,6 @@
 import { initProfile } from "./profile.js";
 import { initVoice } from "./voice.js";
+import { initWatch } from "./watch.js";
 import { supabase, ensureAnonymousSession } from "./supabaseClient.js";
 
 const guestGate = document.getElementById("guestGate");
@@ -104,6 +105,7 @@ async function init(){
       await loadBranches();
       initProfile(member);
       await initVoice(member);
+      await initWatch(member);
       setInterval(async()=>{await heartbeat();await loadBranches();},45000);
       return;
     }

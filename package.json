@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "livekit-server-sdk": "^2.13.3"
+    "livekit-server-sdk": "^2.13.3",
+    "@supabase/supabase-js": "^2.57.4",
+    "livekit-client": "^2.15.6"
   }
 }

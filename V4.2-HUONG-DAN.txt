@@ -1,0 +1,15 @@
+PHOENIX HUB V4.2
+
+1) Supabase > SQL Editor:
+   chạy supabase/v4.2-profile-save-fix.sql
+
+2) Upload toàn bộ source V4.2 lên GitHub.
+
+3) Đợi Vercel Ready rồi F5.
+
+4) Test Lưu hồ sơ trước, sau đó test Đổi ảnh đại diện.
+
+V4.2 sẽ ghi rõ lỗi bắt nguồn từ:
+- LƯU PROFILE
+hoặc
+- UPLOAD AVATAR

@@ -139,7 +139,7 @@ async function uploadAvatar(){
     pendingAvatarUrl = `${data.publicUrl}?v=${Date.now()}`;
     paintAvatar(pendingAvatarUrl, document.getElementById("profileDisplayName").value);
   }catch(err){
-    showError(err.message || "Không thể upload avatar.");
+    showError("UPLOAD AVATAR: " + (err.message || "Không thể upload avatar."));
   }finally{
     avatarBtn.disabled = false;
     avatarBtn.textContent = "📷 Đổi ảnh đại diện";
@@ -177,7 +177,7 @@ async function saveProfile(e){
 
     successBox.classList.remove("hidden");
   }catch(err){
-    showError(err.message || "Không thể cập nhật hồ sơ.");
+    showError("LƯU PROFILE: " + (err.message || "Không thể cập nhật hồ sơ."));
   }finally{
     saveBtn.disabled = false;
     saveBtn.textContent = "Lưu hồ sơ";

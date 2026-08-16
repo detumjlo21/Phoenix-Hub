@@ -1,7 +1,7 @@
 import { initProfile } from "./profile.js";
 import { initVoice } from "./voice.js";
 import { initWatch } from "./watch.js";
-import { supabase, ensureAnonymousSession } from "./supabaseClient.js";
+import { supabase } from "./supabaseClient.js";
 
 const guestGate = document.getElementById("guestGate");
 const pendingGate = document.getElementById("pendingGate");
@@ -86,7 +86,10 @@ async function loadBranches(){
 async function init(){
   try{
     const { data: existing } = await supabase.auth.getSession();
-    if(!existing.session) await ensureAnonymousSession();
+    if(!existing.session){
+      location.replace("login.html");
+      return;
+    }
 
     hideAll();
     member=await getCurrentMember();
@@ -111,10 +114,12 @@ async function init(){
     }
 
     const req=await getLatestRequest();
-    if(!req) guestGate.classList.remove("hidden");
-    else if(req.status==="pending") pendingGate.classList.remove("hidden");
-    else if(req.status==="rejected") rejectedGate.classList.remove("hidden");
-    else guestGate.classList.remove("hidden");
+    if(req?.status==="pending") pendingGate.classList.remove("hidden");
+    else if(req?.status==="rejected") rejectedGate.classList.remove("hidden");
+    else{
+      await supabase.auth.signOut();
+      location.replace("login.html");
+    }
   }catch(err){
     console.error("PHX Hub init:",err);
     hideAll();
@@ -122,12 +127,12 @@ async function init(){
 
     const p = guestGate.querySelector("p");
     if(p){
-      p.textContent = "Không thể tải hồ sơ thành viên: " + (err?.message || "Unknown error");
+      p.textContent = "Không thể tải tài khoản: " + (err?.message || "Unknown error");
     }
     const btn = guestGate.querySelector("a");
     if(btn){
-      btn.textContent = "Tải lại trang";
-      btn.href = location.href;
+      btn.textContent = "Về trang đăng nhập";
+      btn.href = "login.html";
     }
   }
 }

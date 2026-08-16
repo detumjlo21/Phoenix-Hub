@@ -181,7 +181,7 @@ $("requests").addEventListener("click",async e=>{
   if(!btn) return;
   btn.disabled=true;
   try{
-    const fn=btn.dataset.requestAction==="approve" ? "approve_membership_request" : "reject_membership_request";
+    const fn=btn.dataset.requestAction==="approve" ? "approve_membership_request_v5" : "reject_membership_request";
     const data=await rpc(fn,{request_id:btn.dataset.id});
     if(!data?.ok) throw new Error(data?.message || "Không thể xử lý.");
     await Promise.all([loadRequests(),loadStats(),loadMembers()]);

@@ -3,48 +3,67 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Tham gia PHOENIX Hub</title>
+  <title>Đăng ký • PHOENIX Hub</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="join-page">
-  <main class="join-wrap">
-    <section class="join-card">
-      <a class="brand mini-brand" href="./">
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="auth-card auth-card-wide">
+      <div class="auth-brand">
         <span class="logo large">PHX</span>
-      </a>
+        <div><span class="eyebrow">PHOENIX HUB</span><h1>Đăng ký thành viên.</h1></div>
+      </div>
 
-      <span class="eyebrow">PHOENIX HUB</span>
-      <h1>Gửi yêu cầu tham gia.</h1>
-      <p>Mỗi thành viên chỉ cần làm bước này một lần trên thiết bị đang dùng.</p>
+      <p class="auth-lead">UID game sẽ là tài khoản đăng nhập của bạn. Mỗi UID chỉ đăng ký một lần.</p>
 
-      <div id="statusBox" class="status-box hidden"></div>
+      <form id="registerForm" class="join-form auth-form">
+        <div class="auth-grid">
+          <label>
+            UID Free Fire
+            <input id="registerUid" inputmode="numeric" autocomplete="username" required maxlength="24" placeholder="UID game">
+          </label>
 
-      <form id="joinForm" class="join-form">
+          <label>
+            Tên ingame
+            <input id="registerIngame" required maxlength="32" placeholder="VD: PHX.Louis">
+          </label>
+        </div>
+
         <label>
-          Tên ingame
-          <input id="displayName" maxlength="32" required placeholder="VD: PHX.Louis">
-        </label>
-
-        <label>
-          UID Free Fire
-          <input id="freefireUid" maxlength="32" required placeholder="UID của bạn">
+          Tên hiển thị
+          <input id="registerDisplay" required maxlength="32" placeholder="Tên mọi người sẽ thấy trong Hub">
         </label>
 
         <label>
           Nhánh đang tham gia
-          <select id="branchId" required>
+          <select id="registerBranch" required>
             <option value="">Đang tải 3 nhánh...</option>
           </select>
         </label>
 
-        <button id="submitBtn" class="primary" type="submit">Gửi yêu cầu cho BQT</button>
+        <div class="auth-grid">
+          <label>
+            Mật khẩu
+            <input id="registerPassword" type="password" autocomplete="new-password" minlength="6" maxlength="72" required placeholder="Tối thiểu 6 ký tự">
+          </label>
+          <label>
+            Nhập lại mật khẩu
+            <input id="registerPassword2" type="password" autocomplete="new-password" minlength="6" maxlength="72" required placeholder="Nhập lại mật khẩu">
+          </label>
+        </div>
+
+        <button id="registerBtn" class="primary" type="submit">Tạo tài khoản & gửi BQT duyệt</button>
       </form>
 
-      <div id="joinError" class="error hidden"></div>
-      <a class="back-link" href="./">← Về PHOENIX Hub</a>
+      <div id="registerStatus" class="auth-status hidden"></div>
+      <div id="registerError" class="error hidden"></div>
+
+      <div class="auth-footer">
+        <span>Đã có tài khoản?</span>
+        <a href="login.html">Đăng nhập</a>
+      </div>
     </section>
   </main>
-
-  <script type="module" src="js/join.js"></script>
+  <script type="module" src="js/register.js"></script>
 </body>
 </html>

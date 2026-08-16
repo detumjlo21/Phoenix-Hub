@@ -91,6 +91,14 @@ export function initProfile(currentMember){
   });
   form.addEventListener("submit", saveProfile);
 
+  const logoutBtn = document.getElementById("memberLogoutBtn");
+  if(logoutBtn){
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      location.replace("login.html");
+    });
+  }
+
   modal.addEventListener("click", (e) => {
     if(e.target === modal) closeProfile();
   });

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Đăng nhập • PHOENIX Hub</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="auth-card">
+      <div class="auth-brand">
+        <span class="logo large">PHX</span>
+        <div><span class="eyebrow">PHOENIX HUB</span><h1>Đăng nhập.</h1></div>
+      </div>
+
+      <p class="auth-lead">Dùng UID Free Fire và mật khẩu của bạn.</p>
+
+      <form id="loginForm" class="join-form auth-form">
+        <label>
+          UID Free Fire
+          <input id="loginUid" inputmode="numeric" autocomplete="username" required placeholder="VD: 843317173">
+        </label>
+        <label>
+          Mật khẩu
+          <input id="loginPassword" type="password" autocomplete="current-password" minlength="6" required placeholder="••••••••">
+        </label>
+        <button id="loginBtn" class="primary" type="submit">Đăng nhập PHOENIX</button>
+      </form>
+
+      <div id="loginError" class="error hidden"></div>
+
+      <div class="auth-footer">
+        <span>Chưa có tài khoản?</span>
+        <a href="join.html">Đăng ký thành viên</a>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

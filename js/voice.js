@@ -152,7 +152,27 @@ async function connectToRoom(roomId, password=""){
     room.on(RoomEvent.ParticipantDisconnected, renderParticipants);
     room.on(RoomEvent.TrackMuted, renderParticipants);
     room.on(RoomEvent.TrackUnmuted, renderParticipants);
+
+    // Phát audio của các thành viên khác. LiveKit chỉ subscribe track;
+    // trình duyệt vẫn cần một <audio> element được attach để nghe thấy.
+    room.on(RoomEvent.TrackSubscribed, (track) => {
+      if (track.kind === Track.Kind.Audio) {
+        const audioElement = track.attach();
+        audioElement.autoplay = true;
+        audioElement.dataset.phxVoiceAudio = "1";
+        document.body.appendChild(audioElement);
+      }
+      renderParticipants();
+    });
+
+    room.on(RoomEvent.TrackUnsubscribed, (track) => {
+      track.detach().forEach((el) => el.remove());
+      renderParticipants();
+    });
+
+    room.on(RoomEvent.ActiveSpeakersChanged, renderParticipants);
     room.on(RoomEvent.Disconnected, () => {
+      document.querySelectorAll('[data-phx-voice-audio="1"]').forEach(el => el.remove());
       room = null;
       activeRoomMeta = null;
       document.body.classList.remove("modal-open");
@@ -161,6 +181,11 @@ async function connectToRoom(roomId, password=""){
     });
 
     await room.connect(payload.url, payload.token);
+
+    // connectToRoom() chạy trực tiếp sau cú click của người dùng, nên gọi
+    // startAudio ở đây để vượt autoplay policy của Chrome/Edge/Safari.
+    try { await room.startAudio(); } catch (audioErr) { console.warn("startAudio:", audioErr); }
+
     await room.localParticipant.setMicrophoneEnabled(true);
 
     createForm.classList.add("hidden");

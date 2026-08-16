@@ -20,14 +20,11 @@ async function getCurrentMember(){
   if(authError) throw authError;
   if(!auth.user) return null;
 
-  const { data, error } = await supabase
-    .from("members")
-    .select("id,display_name,ingame_name,freefire_uid,avatar_url,bio,branch_id,role,is_global_admin,branches(name)")
-    .eq("auth_user_id",auth.user.id)
-    .maybeSingle();
-
+  // V4.1: lấy member qua SECURITY DEFINER RPC để tránh lỗi RLS/select trực tiếp.
+  const { data, error } = await supabase.rpc("get_my_member_profile");
   if(error) throw error;
-  return data;
+  if(!data?.ok) return null;
+  return data.member;
 }
 
 async function getLatestRequest(){
@@ -120,6 +117,16 @@ async function init(){
     console.error("PHX Hub init:",err);
     hideAll();
     guestGate.classList.remove("hidden");
+
+    const p = guestGate.querySelector("p");
+    if(p){
+      p.textContent = "Không thể tải hồ sơ thành viên: " + (err?.message || "Unknown error");
+    }
+    const btn = guestGate.querySelector("a");
+    if(btn){
+      btn.textContent = "Tải lại trang";
+      btn.href = location.href;
+    }
   }
 }
 

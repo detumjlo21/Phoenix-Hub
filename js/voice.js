@@ -267,7 +267,7 @@ function startAdminRoomWatch(){
 
     try{
       const { data, error } = await supabase.rpc("check_room_active", {
-        room_type: "voice",
+        p_room_type: "voice",
         target_room_id: activeRoomMeta.id
       });
 

@@ -1,3 +1,4 @@
+import { initProfile } from "./profile.js";
 import { initVoice } from "./voice.js";
 import { supabase, ensureAnonymousSession } from "./supabaseClient.js";
 
@@ -21,7 +22,7 @@ async function getCurrentMember(){
 
   const { data, error } = await supabase
     .from("members")
-    .select("id,display_name,branch_id,role,is_global_admin,branches(name)")
+    .select("id,display_name,ingame_name,freefire_uid,avatar_url,bio,branch_id,role,is_global_admin,branches(name)")
     .eq("auth_user_id",auth.user.id)
     .maybeSingle();
 
@@ -47,10 +48,7 @@ async function getLatestRequest(){
 
 async function heartbeat(){
   if(!member) return;
-  const { error } = await supabase
-    .from("members")
-    .update({is_online:true,last_seen:new Date().toISOString()})
-    .eq("id",member.id);
+  const { error } = await supabase.rpc("heartbeat_member");
   if(error) console.warn("Heartbeat:", error.message);
 }
 
@@ -107,6 +105,7 @@ async function init(){
 
       await heartbeat();
       await loadBranches();
+      initProfile(member);
       await initVoice(member);
       setInterval(async()=>{await heartbeat();await loadBranches();},45000);
       return;

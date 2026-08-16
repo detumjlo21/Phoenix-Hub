@@ -152,27 +152,24 @@ async function connectToRoom(roomId, password=""){
     room.on(RoomEvent.ParticipantDisconnected, renderParticipants);
     room.on(RoomEvent.TrackMuted, renderParticipants);
     room.on(RoomEvent.TrackUnmuted, renderParticipants);
+    room.on(RoomEvent.ActiveSpeakersChanged, renderParticipants);
 
-    // Phát audio của các thành viên khác. LiveKit chỉ subscribe track;
-    // trình duyệt vẫn cần một <audio> element được attach để nghe thấy.
+    // Phát audio của thành viên khác trong trình duyệt.
     room.on(RoomEvent.TrackSubscribed, (track) => {
       if (track.kind === Track.Kind.Audio) {
-        const audioElement = track.attach();
-        audioElement.autoplay = true;
-        audioElement.dataset.phxVoiceAudio = "1";
-        document.body.appendChild(audioElement);
+        const audio = track.attach();
+        audio.autoplay = true;
+        audio.dataset.phxRemoteAudio = "1";
+        document.body.appendChild(audio);
       }
       renderParticipants();
     });
 
     room.on(RoomEvent.TrackUnsubscribed, (track) => {
-      track.detach().forEach((el) => el.remove());
+      track.detach().forEach(el => el.remove());
       renderParticipants();
     });
-
-    room.on(RoomEvent.ActiveSpeakersChanged, renderParticipants);
     room.on(RoomEvent.Disconnected, () => {
-      document.querySelectorAll('[data-phx-voice-audio="1"]').forEach(el => el.remove());
       room = null;
       activeRoomMeta = null;
       document.body.classList.remove("modal-open");
@@ -182,10 +179,8 @@ async function connectToRoom(roomId, password=""){
 
     await room.connect(payload.url, payload.token);
 
-    // connectToRoom() chạy trực tiếp sau cú click của người dùng, nên gọi
-    // startAudio ở đây để vượt autoplay policy của Chrome/Edge/Safari.
-    try { await room.startAudio(); } catch (audioErr) { console.warn("startAudio:", audioErr); }
-
+    // Vì thao tác này xảy ra sau click "Vào voice", browser cho phép mở audio.
+    try { await room.startAudio(); } catch (e) { console.warn("startAudio:", e); }
     await room.localParticipant.setMicrophoneEnabled(true);
 
     createForm.classList.add("hidden");
@@ -195,7 +190,7 @@ async function connectToRoom(roomId, password=""){
     document.getElementById("activeVoiceName").textContent = payload.room.name;
     document.getElementById("activeVoiceState").textContent = "Đã kết nối LiveKit";
     document.getElementById("closeRoomBtn").classList.toggle("hidden", !payload.isHost);
-    document.getElementById("micBtn").textContent = "🎙 Tắt mic";
+    updateMicButton();
     openModal();
     renderParticipants();
   }catch(err){
@@ -203,27 +198,59 @@ async function connectToRoom(roomId, password=""){
   }
 }
 
+function initials(name){
+  const parts = String(name || "?").trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0,2).map(x => x[0]).join("").toUpperCase() || "?";
+}
+
 function renderParticipants(){
   if(!room) return;
   const people = [room.localParticipant, ...room.remoteParticipants.values()];
+  document.getElementById("voiceMemberCount").textContent = people.length;
+
   document.getElementById("voiceParticipants").innerHTML = people.map(p => {
     const mic = p.getTrackPublication(Track.Source.Microphone);
     const muted = !mic || mic.isMuted;
     const name = p.name || p.identity;
-    return `<div class="participant"><span>${muted ? "🔇" : "🎙️"}</span><b>${esc(name)}</b>${p === room.localParticipant ? "<small>Bạn</small>" : ""}</div>`;
+    const isMe = p === room.localParticipant;
+    const speaking = p.isSpeaking === true;
+
+    return `
+      <div class="participant ${speaking ? "is-speaking" : ""}">
+        <div class="participant-avatar">
+          ${esc(initials(name))}
+          <span class="participant-mic ${muted ? "muted" : ""}">${muted ? "×" : "●"}</span>
+        </div>
+        <div class="participant-info">
+          <b>${esc(name)}</b>
+          <small>${isMe ? "Bạn" : (speaking ? "Đang nói" : "Trong phòng")}</small>
+        </div>
+        <div class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>`;
   }).join("");
+}
+
+function updateMicButton(){
+  if(!room) return;
+  const enabled = room.localParticipant.isMicrophoneEnabled;
+  const btn = document.getElementById("micBtn");
+  btn.classList.toggle("mic-on", enabled);
+  btn.classList.toggle("mic-off", !enabled);
+  btn.querySelector(".control-icon").textContent = enabled ? "🎙" : "🔇";
+  btn.querySelector(".control-label").textContent = enabled ? "Tắt mic" : "Bật mic";
 }
 
 async function toggleMic(){
   if(!room) return;
   const enabled = room.localParticipant.isMicrophoneEnabled;
   await room.localParticipant.setMicrophoneEnabled(!enabled);
-  document.getElementById("micBtn").textContent = enabled ? "🎙 Bật mic" : "🎙 Tắt mic";
+  updateMicButton();
   renderParticipants();
 }
 
 async function leaveVoice(){
   if(!room) return closeModal();
+  document.querySelectorAll("audio[data-phx-remote-audio='1']").forEach(el => el.remove());
   await room.disconnect();
 }
 

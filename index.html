@@ -15,10 +15,11 @@
 
     <nav class="header-actions">
       <a id="adminLink" class="text-link hidden" href="admin.html">BQT</a>
-      <div id="me" class="me hidden">
-        <span class="online-dot"></span>
-        <div><b id="meName">...</b><small id="meBranch">...</small></div>
-      </div>
+      <button id="me" class="me me-profile-button hidden" type="button" title="Mở hồ sơ">
+        <span id="meAvatar" class="me-avatar"><span id="meAvatarInitial">P</span></span>
+        <span class="online-dot me-online-dot"></span>
+        <span class="me-copy"><b id="meName">...</b><small id="meBranch">...</small></span>
+      </button>
     </nav>
   </header>
 
@@ -145,19 +146,103 @@
       </div>
 
       <div id="activeVoicePanel" class="hidden">
-        <div class="voice-live">
-          <div class="voice-pulse">🎧</div>
-          <div><b id="activeVoiceName">Voice</b><small id="activeVoiceState">Đang kết nối...</small></div>
+        <div class="voice-room-hero">
+          <div class="voice-room-orb">
+            <span>🎧</span>
+          </div>
+          <div class="voice-room-copy">
+            <div class="voice-room-status"><i></i><span id="activeVoiceState">Đang kết nối...</span></div>
+            <h3 id="activeVoiceName">Voice</h3>
+            <p><span id="voiceMemberCount">1</span> người đang trong phòng</p>
+          </div>
+        </div>
+
+        <div class="voice-section-title">
+          <span>THÀNH VIÊN</span>
+          <small>Mic sẽ sáng khi đang nói</small>
         </div>
         <div id="voiceParticipants" class="participant-list"></div>
-        <div class="voice-controls">
-          <button id="micBtn" class="secondary">🎙 Tắt mic</button>
-          <button id="closeRoomBtn" class="danger hidden">Đóng phòng</button>
-          <button id="leaveVoiceBtn" class="danger">Rời phòng</button>
+
+        <div class="voice-control-dock">
+          <button id="micBtn" class="voice-control-btn mic-on">
+            <span class="control-icon">🎙</span>
+            <span class="control-label">Tắt mic</span>
+          </button>
+          <button id="closeRoomBtn" class="voice-control-btn host-action hidden">
+            <span class="control-icon">■</span>
+            <span class="control-label">Đóng phòng</span>
+          </button>
+          <button id="leaveVoiceBtn" class="voice-control-btn leave-action">
+            <span class="control-icon">↗</span>
+            <span class="control-label">Rời phòng</span>
+          </button>
         </div>
       </div>
 
       <div id="voiceError" class="error hidden"></div>
+    </div>
+  </div>
+
+
+  <div id="profileModal" class="modal hidden">
+    <div class="modal-card profile-modal-card">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">HỒ SƠ THÀNH VIÊN</span>
+          <h2>Profile PHOENIX</h2>
+        </div>
+        <button id="profileModalClose" class="icon-button" type="button">✕</button>
+      </div>
+
+      <div class="profile-layout">
+        <aside class="profile-avatar-panel">
+          <div id="profileAvatarPreview" class="profile-avatar-preview">
+            <span id="profileAvatarInitial">P</span>
+          </div>
+
+          <input id="profileAvatarInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp">
+          <button id="profileAvatarBtn" class="secondary profile-avatar-btn" type="button">📷 Đổi ảnh đại diện</button>
+          <small>JPG, PNG hoặc WEBP • tối đa 3MB</small>
+        </aside>
+
+        <form id="profileForm" class="join-form profile-form">
+          <label>
+            Tên hiển thị
+            <input id="profileDisplayName" maxlength="32" required>
+          </label>
+
+          <label>
+            Tên ingame
+            <input id="profileIngameName" maxlength="32" required>
+          </label>
+
+          <label>
+            Giới thiệu
+            <textarea id="profileBio" maxlength="160" rows="4" placeholder="Viết vài dòng về bạn..."></textarea>
+            <span id="profileBioCount" class="field-counter">0 / 160</span>
+          </label>
+
+          <div class="profile-readonly-grid">
+            <div class="profile-readonly">
+              <small>UID FREE FIRE</small>
+              <b id="profileUid">—</b>
+            </div>
+            <div class="profile-readonly">
+              <small>NHÁNH</small>
+              <b id="profileBranch">—</b>
+            </div>
+            <div class="profile-readonly">
+              <small>VAI TRÒ</small>
+              <b id="profileRole">—</b>
+            </div>
+          </div>
+
+          <button id="profileSaveBtn" class="primary" type="submit">Lưu hồ sơ</button>
+        </form>
+      </div>
+
+      <div id="profileError" class="error hidden"></div>
+      <div id="profileSuccess" class="success-message hidden">✓ Đã cập nhật hồ sơ.</div>
     </div>
   </div>
 
